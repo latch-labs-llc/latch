@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Split-Control Escrow — Live Demo</title>
+<style>
+  :root {
+    --ink:#17202a; --sub:#5d6d7e; --line:#dfe4ea; --card:#ffffff; --bg:#f4f6f8;
+    --accent:#0b5345; --accent2:#117a65; --done:#1e8449; --gold:#7d6608; --warn:#943126;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:linear-gradient(135deg, #0b5345, #145a52 60%, #1a5276); color:#fff; padding:28px 32px; }
+  header h1 { margin:0 0 4px; font-size:1.5em; font-weight:650; letter-spacing:.01em; }
+  header p { margin:0; opacity:.85; font-size:.92em; }
+  .wrap { max-width:1080px; margin:0 auto; padding:24px 24px 80px; display:grid; grid-template-columns: 1fr 340px; gap:24px; }
+  @media (max-width:900px){ .wrap{ grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:18px; }
+  .step { display:flex; gap:14px; padding:14px 0; border-bottom:1px solid var(--line); }
+  .step:last-child { border-bottom:none; }
+  .dot { flex:0 0 30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+         font-size:.85em; font-weight:700; border:2px solid var(--line); color:var(--sub); background:#fff; }
+  .step.done .dot { background:var(--done); border-color:var(--done); color:#fff; }
+  .step.next .dot { border-color:var(--accent2); color:var(--accent2); }
+  .step h3 { margin:2px 0 4px; font-size:1em; }
+  .step p { margin:0 0 6px; color:var(--sub); font-size:.88em; }
+  .step .body { flex:1; }
+  .txs a { display:inline-block; font-family:ui-monospace,Menlo,monospace; font-size:.78em; color:var(--accent2);
+           background:#eafaf1; border:1px solid #c8e6d5; border-radius:6px; padding:2px 8px; margin:2px 6px 2px 0; text-decoration:none; }
+  button { font:inherit; cursor:pointer; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:#fff; padding:9px 20px; font-weight:600; }
+  button:hover { background:var(--accent2); }
+  button:disabled { background:#aab7b8; border-color:#aab7b8; cursor:not-allowed; }
+  button.alt { background:#fff; color:var(--warn); border-color:var(--warn); }
+  button.ghost { background:#fff; color:var(--accent); }
+  .statebar { display:flex; gap:12px; flex-wrap:wrap; }
+  .stat { flex:1 1 90px; background:#f8fafc; border:1px solid var(--line); border-radius:8px; padding:10px 12px; }
+  .stat .v { font-size:1.25em; font-weight:700; }
+  .stat .k { font-size:.72em; color:var(--sub); text-transform:uppercase; letter-spacing:.06em; }
+  .badge { display:inline-block; padding:3px 12px; border-radius:20px; font-size:.8em; font-weight:700;
+           background:#eaf2f8; color:#1a5276; }
+  .mono { font-family:ui-monospace,Menlo,monospace; font-size:.75em; word-break:break-all; color:var(--sub); }
+  pre.agreement { background:#fdfaf3; border:1px solid #e8dcc3; border-radius:8px; padding:14px; font-size:.72em;
+                  max-height:340px; overflow:auto; white-space:pre-wrap; }
+  .consent { background:#fef9e7; border:1px solid #f1e0a6; border-radius:8px; padding:10px 14px; font-size:.85em; margin:10px 0; }
+  .fork { display:flex; gap:12px; margin-top:10px; }
+  .fork > div { flex:1; border:1.5px solid var(--line); border-radius:10px; padding:14px; }
+  .fork h4 { margin:0 0 6px; }
+  .fork p { font-size:.85em; color:var(--sub); }
+  .spin { display:inline-block; width:14px; height:14px; border:2px solid #fff; border-top-color:transparent; border-radius:50%;
+          animation:r .7s linear infinite; vertical-align:-2px; margin-right:8px; }
+  @keyframes r { to { transform:rotate(360deg); } }
+  .error { color:var(--warn); font-size:.85em; margin-top:8px; }
+  .cert { display:block; text-align:center; background:#7d6608; color:#fff; border-radius:8px; padding:12px; text-decoration:none; font-weight:650; }
+  footer.note { font-size:.78em; color:var(--sub); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Split-Control Escrow — Live Demonstration</h1>
+  <p>A real marketplace sale, executed as a legal agreement with tokenized consideration in split-control escrow. Every step below is a live transaction on Solana devnet.</p>
+</header>
+<div class="wrap">
+  <main>
+    <div class="card" id="steps"></div>
+    <div class="card" id="forkCard" style="display:none">
+      <h3 style="margin-top:0">The item has shipped. How does this deal end?</h3>
+      <div class="fork">
+        <div>
+          <h4>✅ Happy path</h4>
+          <p>The desk arrives as described. Both parties confirm delivery and payment releases to the Seller — final settlement, no chargebacks.</p>
+          <button onclick="choose('complete')">Complete the sale</button>
+        </div>
+        <div>
+          <h4>⚖️ Dispute path</h4>
+          <p>The desk arrives scratched. The Buyer disputes; funds lock under the pre-agreed rules; the parties settle 50/50 on-chain.</p>
+          <button class="alt" onclick="choose('dispute')">Raise a dispute</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="agreementCard" style="display:none">
+      <h3 style="margin-top:0">The Agreement <span class="mono" id="hash"></span></h3>
+      <pre class="agreement" id="agreement"></pre>
+    </div>
+  </main>
+  <aside>
+    <div class="card">
+      <h3 style="margin-top:0">Deal status <span class="badge" id="dealState">—</span></h3>
+      <div class="statebar">
+        <div class="stat"><div class="v" id="bBuyer">—</div><div class="k">Buyer dUSD</div></div>
+        <div class="stat"><div class="v" id="bVault">—</div><div class="k">Escrow vault</div></div>
+        <div class="stat"><div class="v" id="bSeller">—</div><div class="k">Seller dUSD</div></div>
+      </div>
+      <p class="mono" style="margin-bottom:0" id="dealAddr"></p>
+    </div>
+    <div class="card" id="ctrl">
+      <button id="go" onclick="next()" style="width:100%">Start demo</button>
+      <div class="consent" id="consent" style="display:none">
+        <label><input type="checkbox" id="consentBox" onchange="render(last)"> The signing party has reviewed the agreement and consents to transact and sign electronically (E-SIGN / UETA).</label>
+      </div>
+      <div class="error" id="err"></div>
+    </div>
+    <div class="card" id="doneCard" style="display:none">
+      <a class="cert" href="/certificate" target="_blank">📜 Open Signature &amp; Escrow Certificate</a>
+      <p style="font-size:.85em;color:var(--sub)">Print-ready. Every fact on it is reconstructed from the public chain and independently verifiable.</p>
+      <button class="ghost" style="width:100%" onclick="resetDeal()">Start a new deal (try the other path)</button>
+    </div>
+    <div class="card footer note">
+      Demo wallets and a test token on Solana devnet — no real funds. In production, parties sign with their own wallets (Phantom&nbsp;etc.). The platform never holds a key to the vault: funds move only on the parties’ signatures, the rule they chose at formation, or their designated recovery agent after an on-chain notice period.
+    </div>
+  </aside>
+</div>
+<script>
+let last = null, busy = false;
+const $ = id => document.getElementById(id);
+
+async function refresh() {
+  const s = await (await fetch('/api/state')).json();
+  last = s; render(s);
+}
+
+function render(s) {
+  if (!s) return;
+  const stepsEl = $('steps');
+  stepsEl.innerHTML = s.steps.map(st => `
+    <div class="step ${st.status}">
+      <div class="dot">${st.status === 'done' ? '✓' : st.idx + 1}</div>
+      <div class="body">
+        <h3>${st.label}</h3>
+        <p>${st.desc}</p>
+        <div class="txs">${st.txs.map(t => `<a href="https://explorer.solana.com/tx/${t.sig}?cluster=devnet" target="_blank" title="${t.label}">${t.label} ↗</a>`).join('')}</div>
+      </div>
+    </div>`).join('');
+
+  $('forkCard').style.display = s.need_path ? '' : 'none';
+  $('doneCard').style.display = s.done ? '' : 'none';
+
+  if (s.agreement) {
+    $('agreementCard').style.display = '';
+    $('agreement').textContent = s.agreement;
+  }
+  if (s.deal) {
+    $('dealState').textContent = s.deal.state;
+    $('bBuyer').textContent = fmt(s.deal.buyer_balance);
+    $('bVault').textContent = fmt(s.deal.vault_balance);
+    $('bSeller').textContent = fmt(s.deal.seller_balance);
+    $('dealAddr').innerHTML = `deal: <a href="https://explorer.solana.com/address/${s.deal.address}?cluster=devnet" target="_blank">${s.deal.address}</a>`;
+    $('hash').textContent = 'sha256: ' + s.deal.terms_hash;
+  }
+
+  const go = $('go');
+  const isSigning = s.next === 2 || s.next === 3;
+  $('consent').style.display = isSigning ? '' : 'none';
+  if (s.done) { go.style.display = 'none'; }
+  else {
+    go.style.display = '';
+    const labels = {0:'Prepare environment',1:'Draft agreement & create deal',2:'Buyer: sign the agreement',3:'Seller: sign the agreement',4:'Buyer: fund escrow (1,200 dUSD)',5:'Confirm ready (both parties)',6:null,7:null,8:null};
+    const stepObj = s.steps.find(x => x.idx === s.next);
+    go.textContent = busy ? '' : (labels[s.next] ?? (stepObj ? stepObj.label : 'Next step'));
+    if (busy) { go.innerHTML = '<span class="spin"></span>Submitting to devnet…'; }
+    go.disabled = busy || s.need_path || (isSigning && !$('consentBox').checked);
+  }
+}
+
+function fmt(v) { const n = parseFloat(v); return isNaN(n) ? v : n.toLocaleString(); }
+
+async function next() {
+  if (busy) return;
+  busy = true; $('err').textContent = ''; render(last);
+  try {
+    const r = await (await fetch('/api/next', {method:'POST'})).json();
+    if (r.error) $('err').textContent = r.error;
+    $('consentBox').checked = false;
+  } catch (e) { $('err').textContent = e; }
+  busy = false;
+  await refresh();
+}
+
+async function choose(path) {
+  await fetch('/api/path', {method:'POST', body: JSON.stringify({path})});
+  await refresh();
+}
+
+async function resetDeal() {
+  await fetch('/api/reset', {method:'POST'});
+  $('agreementCard').style.display = 'none';
+  await refresh();
+}
+
+refresh();
+</script>
+</body>
+</html>
