@@ -12,7 +12,7 @@ pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("8QFtCzFQDdQNWoz8XX4zYzPixf7L3vaHLe1Pj67zWFMz");
+declare_id!("BT8tr7YXYLQPsLMq3qCipY1fBKyjT3gmGQB5amV2v5yv");
 
 // Split-control escrow: two or more parties lock tokenized consideration in a
 // program-owned vault. Funds move only on the parties' sign-offs, the resolution

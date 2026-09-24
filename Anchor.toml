@@ -7,7 +7,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-latch = "8QFtCzFQDdQNWoz8XX4zYzPixf7L3vaHLe1Pj67zWFMz"
+latch = "BT8tr7YXYLQPsLMq3qCipY1fBKyjT3gmGQB5amV2v5yv"
 
 [provider]
 cluster = "localnet"
