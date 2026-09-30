@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  # Keep in sync with the toolchain the release binary is built with.
+  AGAVE_VERSION: v4.2.2
+
+jobs:
+  lint:
+    name: Format & lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: rustfmt (enforced)
+        run: cargo fmt --all --check
+      - name: clippy (advisory)
+        # Advisory for now: warnings are reported, not build-breaking.
+        # Tighten to `-D warnings` on the program crate before the audit.
+        continue-on-error: true
+        run: cargo clippy --workspace --all-targets
+
+  build-test:
+    name: Build (SBF v0) & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Cache Solana platform tools
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/solana
+          key: solana-platform-tools-${{ env.AGAVE_VERSION }}
+      - name: Install Agave (Solana) CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/${AGAVE_VERSION}/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+      - name: Build program (SBF v0)
+        # v0 is required: SBPF v3 (Anchor 1.2's default) is rejected by
+        # current cluster deployment and by LiteSVM. See DECISIONS.md.
+        working-directory: programs/latch
+        run: cargo build-sbf --arch v0
+      - name: Run test suite
+        run: cargo test --workspace
+
+  verified-build:
+    name: Deterministic build (solana-verify)
+    # Native x86 runner: the verifiable-build image's toolchain crashes under
+    # ARM emulation (qemu and Rosetta both), so CI is the canonical builder.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install solana-verify
+        run: cargo install solana-verify --locked
+      - name: Deterministic build
+        run: solana-verify build --library-name latch -b solanafoundation/solana-verifiable-build:4.2.2
+      - name: Executable hash
+        run: solana-verify get-executable-hash target/deploy/latch.so | tee latch.so.sha256
+      - name: Upload verified artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: latch-verified-build
+          path: |
+            target/deploy/latch.so
+            latch.so.sha256
+
+  audit:
+    name: cargo audit (advisory)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+      - name: cargo audit
+        # Advisory: the Solana dependency tree routinely carries upstream
+        # advisories outside our control; findings are triaged, not ignored.
+        continue-on-error: true
+        run: cargo audit
