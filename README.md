@@ -1,6 +1,6 @@
 # Latch
 
-[![CI](https://github.com/latch-labs-llc/latch/actions/workflows/ci.yml/badge.svg)](https://github.com/latch-labs-llc/latch/actions/workflows/ci.yml) [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![CI](https://github.com/latch-labs-llc/latch/actions/workflows/ci.yml/badge.svg)](https://github.com/latch-labs-llc/latch/actions/workflows/ci.yml) [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) [![npm sdk](https://img.shields.io/npm/v/%40latch-labs%2Fsdk?label=%40latch-labs%2Fsdk)](https://www.npmjs.com/package/@latch-labs/sdk) [![npm cli](https://img.shields.io/npm/v/%40latch-labs%2Fcli?label=%40latch-labs%2Fcli)](https://www.npmjs.com/package/@latch-labs/cli)
 
 **Split-control escrow for Solana.** Two or more parties lock tokenized
 consideration (stablecoins first) in a program-owned vault that no single
@@ -111,6 +111,15 @@ a signing ceremony over the document's SHA-256 digest, escrow funding,
 delivery confirmation and release (or a dispute settled on-chain) — and ends
 with a print-ready signature certificate reconstructed entirely from on-chain
 data.
+
+## TypeScript SDK & CLI
+
+```sh
+npm install @latch-labs/sdk     # typed client: all 14 instructions, events, PDAs
+npm install -g @latch-labs/cli  # full-lifecycle `latch` command
+```
+
+See `clients/ts/packages/*/README.md` for quickstarts.
 
 ## Repository
 
