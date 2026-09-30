@@ -1,0 +1,38 @@
+name: Publish packages
+
+# npm trusted publishing (OIDC): no tokens, no OTP. Requires this workflow to
+# be registered as the trusted publisher for @latch-labs/sdk and
+# @latch-labs/cli in each package's npmjs.com settings.
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "sdk-v*"
+      - "cli-v*"
+
+permissions:
+  contents: read
+  id-token: write # OIDC token for npm trusted publishing
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Ensure npm >= 11.5 (OIDC support)
+        run: npm install -g npm@latest && npm --version
+      - name: Install & build
+        working-directory: clients/ts
+        run: npm ci && npm run build
+      - name: Publish @latch-labs/sdk
+        if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref_name, 'sdk-v') }}
+        working-directory: clients/ts/packages/sdk
+        run: npm publish --access public
+      - name: Publish @latch-labs/cli
+        if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref_name, 'cli-v') }}
+        working-directory: clients/ts/packages/cli
+        run: npm publish --access public
