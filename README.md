@@ -25,6 +25,8 @@ Maintained by Latch Labs LLC (in formation). Apache-2.0.
 | Explorer | https://explorer.solana.com/address/BT8tr7YXYLQPsLMq3qCipY1fBKyjT3gmGQB5amV2v5yv?cluster=devnet |
 | Verified hash | `4679454385e2e0edca7ac3accf4db3002f6e3c4dd0c6feae5a399742399cc205` |
 
+**Demo videos:** [Full sale lifecycle](https://youtu.be/69Psn335b_I) · [Dispute raised and settled on-chain](https://youtu.be/lbIxBCt56W0)
+
 ### Verify the deployed bytecode yourself
 
 The on-chain program is a deterministic build of this repository (CI's
