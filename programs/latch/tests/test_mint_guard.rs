@@ -1,13 +1,17 @@
 mod common;
 
 use common::*;
-use solana_signer::Signer;
 use latch::state::{risk_flags, DealState};
+use solana_signer::Signer;
 
 fn try_create_2022(
     exts: &[TestExt],
     accepted: u16,
-) -> (litesvm::LiteSVM, litesvm::types::TransactionResult, anchor_lang::prelude::Pubkey) {
+) -> (
+    litesvm::LiteSVM,
+    litesvm::types::TransactionResult,
+    anchor_lang::prelude::Pubkey,
+) {
     let (mut svm, alice, bob) = setup();
     let mint = create_mint_2022_with_extensions(&mut svm, &alice, &alice.pubkey(), exts);
     let mut params = default_params(&alice.pubkey(), &bob.pubkey(), vec![1000]);
@@ -37,11 +41,16 @@ fn permanent_delegate_flagged_and_requires_acceptance() {
     let (_svm, res, _) = try_create_2022(&[TestExt::PermanentDelegate(delegate)], 0);
     assert_err(res, "RiskFlagsNotAccepted");
     // Accepted → recorded in the deal.
-    let (svm, res, deal) =
-        try_create_2022(&[TestExt::PermanentDelegate(delegate)], risk_flags::PERMANENT_DELEGATE);
+    let (svm, res, deal) = try_create_2022(
+        &[TestExt::PermanentDelegate(delegate)],
+        risk_flags::PERMANENT_DELEGATE,
+    );
     res.unwrap();
     let d = get_deal(&svm, &deal);
-    assert_eq!(d.risk_flags & risk_flags::PERMANENT_DELEGATE, risk_flags::PERMANENT_DELEGATE);
+    assert_eq!(
+        d.risk_flags & risk_flags::PERMANENT_DELEGATE,
+        risk_flags::PERMANENT_DELEGATE
+    );
 }
 
 #[test]
@@ -55,7 +64,10 @@ fn freeze_authority_flagged_on_classic_mint() {
     let mut params = default_params(&alice.pubkey(), &bob.pubkey(), vec![1000]);
     params.accepted_risk_flags = 0;
     let ix = ix_create_deal(&alice.pubkey(), &mint, &tp, params);
-    assert_err(send(&mut svm, &[ix], &alice.pubkey(), &[&alice]), "RiskFlagsNotAccepted");
+    assert_err(
+        send(&mut svm, &[ix], &alice.pubkey(), &[&alice]),
+        "RiskFlagsNotAccepted",
+    );
 
     // Accepted → flag recorded (this is the USDC/USDT disclosure path).
     let mut params = default_params(&alice.pubkey(), &bob.pubkey(), vec![1000]);
@@ -64,7 +76,10 @@ fn freeze_authority_flagged_on_classic_mint() {
     let deal = deal_pda(&alice.pubkey(), 2);
     let ix = ix_create_deal(&alice.pubkey(), &mint, &tp, params);
     send(&mut svm, &[ix], &alice.pubkey(), &[&alice]).unwrap();
-    assert_eq!(get_deal(&svm, &deal).risk_flags, risk_flags::FREEZE_AUTHORITY);
+    assert_eq!(
+        get_deal(&svm, &deal).risk_flags,
+        risk_flags::FREEZE_AUTHORITY
+    );
 }
 
 #[test]
@@ -76,7 +91,10 @@ fn transfer_fee_mint_credits_by_balance_delta() {
         &mut svm,
         &alice,
         &alice.pubkey(),
-        &[TestExt::TransferFee { bps: 100, max: 1_000_000 }],
+        &[TestExt::TransferFee {
+            bps: 100,
+            max: 1_000_000,
+        }],
     );
     let alice_ata = create_token_account(&mut svm, &alice, &alice.pubkey(), &mint, &tp);
     let alice_kp = alice.insecure_clone();
@@ -89,7 +107,13 @@ fn transfer_fee_mint_credits_by_balance_delta() {
     send(&mut svm, &[ix], &alice.pubkey(), &[&alice]).unwrap();
     for kp in [alice.insecure_clone(), bob.insecure_clone()] {
         svm.airdrop(&kp.pubkey(), SOL).unwrap();
-        send(&mut svm, &[ix_sign_terms(&kp.pubkey(), &deal, true)], &kp.pubkey(), &[&kp]).unwrap();
+        send(
+            &mut svm,
+            &[ix_sign_terms(&kp.pubkey(), &deal, true)],
+            &kp.pubkey(),
+            &[&kp],
+        )
+        .unwrap();
     }
 
     // Sending 1000 credits 990 — the deal counts what the vault received.

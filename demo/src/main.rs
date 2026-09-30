@@ -12,9 +12,9 @@ use {
         AccountDeserialize, InstructionData, ToAccountMetas,
     },
     anchor_spl::{
-        associated_token::get_associated_token_address_with_program_id,
-        token_2022::spl_token_2022,
+        associated_token::get_associated_token_address_with_program_id, token_2022::spl_token_2022,
     },
+    latch::{state::*, CreateDealParams},
     serde_json::{json, Value},
     sha2::{Digest, Sha256},
     solana_keypair::Keypair,
@@ -22,7 +22,6 @@ use {
     solana_rpc_client::rpc_client::RpcClient,
     solana_signer::Signer,
     solana_transaction::versioned::VersionedTransaction,
-    latch::{state::*, CreateDealParams},
     std::{
         io::Read as _,
         sync::Mutex,
@@ -107,13 +106,19 @@ fn tp() -> Pubkey {
     anchor_spl::token::ID
 }
 
-fn program_ix(data: Vec<u8>, metas: Vec<anchor_lang::solana_program::instruction::AccountMeta>) -> Instruction {
+fn program_ix(
+    data: Vec<u8>,
+    metas: Vec<anchor_lang::solana_program::instruction::AccountMeta>,
+) -> Instruction {
     Instruction::new_with_bytes(latch::id(), &data, metas)
 }
 
 fn ix_sign_terms(party: &Pubkey, deal: &Pubkey) -> Instruction {
     program_ix(
-        latch::instruction::SignTerms { consent_true_deadlock: true }.data(),
+        latch::instruction::SignTerms {
+            consent_true_deadlock: true,
+        }
+        .data(),
         latch::accounts::SignTerms {
             party: *party,
             deal: *deal,
@@ -165,7 +170,10 @@ fn ix_raise(party: &Pubkey, deal: &Pubkey) -> Instruction {
 
 fn ix_res_sign(signer: &Pubkey, deal: &Pubkey, amount: u64) -> Instruction {
     program_ix(
-        latch::instruction::ResolutionSign { amount_to_payee: amount }.data(),
+        latch::instruction::ResolutionSign {
+            amount_to_payee: amount,
+        }
+        .data(),
         latch::accounts::ResolutionSign {
             signer: *signer,
             deal: *deal,
@@ -251,7 +259,9 @@ fn setup_env(client: &RpcClient) -> Result<Env, String> {
     let home = std::env::var("HOME").map_err(|e| e.to_string())?;
     let funder = solana_keypair::read_keypair_file(format!("{home}/.config/solana/id.json"))
         .map_err(|e| format!("no keypair at ~/.config/solana/id.json: {e}"))?;
-    let balance = client.get_balance(&funder.pubkey()).map_err(|e| e.to_string())?;
+    let balance = client
+        .get_balance(&funder.pubkey())
+        .map_err(|e| e.to_string())?;
     if balance < 300_000_000 {
         return Err("funder needs ≥0.3 devnet SOL (faucet.solana.com)".into());
     }
@@ -268,7 +278,10 @@ fn setup_env(client: &RpcClient) -> Result<Env, String> {
         &funder.pubkey(),
         &[&funder],
     )?;
-    log.push(("Fund demo wallets (Buyer, Seller) with devnet SOL for fees".into(), sig));
+    log.push((
+        "Fund demo wallets (Buyer, Seller) with devnet SOL for fees".into(),
+        sig,
+    ));
 
     let mint_kp = Keypair::new();
     let rent = client
@@ -296,7 +309,10 @@ fn setup_env(client: &RpcClient) -> Result<Env, String> {
         &funder.pubkey(),
         &[&funder, &mint_kp],
     )?;
-    log.push(("Create Demo USD test mint (stand-in stablecoin)".into(), sig));
+    log.push((
+        "Create Demo USD test mint (stand-in stablecoin)".into(),
+        sig,
+    ));
     let mint = mint_kp.pubkey();
 
     let mut make_ta = |owner: &Pubkey, label: &str| -> Result<Pubkey, String> {
@@ -380,7 +396,10 @@ fn new_session(env: &Env, client: &RpcClient) -> Result<Sess, String> {
         )?;
         pre_txs.push(("Top up Buyer to 2,000 dUSD".into(), sig));
     }
-    let deal_id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+    let deal_id = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
     let deal = Pubkey::find_program_address(
         &[b"deal", env.buyer.pubkey().as_ref(), &deal_id.to_le_bytes()],
         &latch::id(),
@@ -464,14 +483,24 @@ fn run_step(app: &mut App, client: &RpcClient) -> Result<Value, Value> {
     let mut txs: Vec<(String, String)> = Vec::new();
     let label: String = match step {
         2 => {
-            let sig = send(client, &[ix_sign_terms(&env.buyer.pubkey(), &sess.deal)], &env.buyer.pubkey(), &[&env.buyer])
-                .map_err(|e| json!({"error": e}))?;
+            let sig = send(
+                client,
+                &[ix_sign_terms(&env.buyer.pubkey(), &sess.deal)],
+                &env.buyer.pubkey(),
+                &[&env.buyer],
+            )
+            .map_err(|e| json!({"error": e}))?;
             txs.push(("sign_terms (Buyer)".into(), sig));
             "Buyer executed the agreement: wallet signature over the document digest, recorded on-chain".into()
         }
         3 => {
-            let sig = send(client, &[ix_sign_terms(&env.seller.pubkey(), &sess.deal)], &env.seller.pubkey(), &[&env.seller])
-                .map_err(|e| json!({"error": e}))?;
+            let sig = send(
+                client,
+                &[ix_sign_terms(&env.seller.pubkey(), &sess.deal)],
+                &env.seller.pubkey(),
+                &[&env.seller],
+            )
+            .map_err(|e| json!({"error": e}))?;
             txs.push(("sign_terms (Seller)".into(), sig));
             "Seller executed the agreement — all parties signed; terms are now frozen".into()
         }
@@ -497,8 +526,13 @@ fn run_step(app: &mut App, client: &RpcClient) -> Result<Value, Value> {
         }
         5 => {
             for (kp, who) in [(&env.buyer, "Buyer"), (&env.seller, "Seller")] {
-                let sig = send(client, &[ix_confirm_ready(&kp.pubkey(), &sess.deal)], &kp.pubkey(), &[kp])
-                    .map_err(|e| json!({"error": e}))?;
+                let sig = send(
+                    client,
+                    &[ix_confirm_ready(&kp.pubkey(), &sess.deal)],
+                    &kp.pubkey(),
+                    &[kp],
+                )
+                .map_err(|e| json!({"error": e}))?;
                 txs.push((format!("confirm_ready ({who})"), sig));
             }
             "Both parties confirmed ready — deal is Active; Seller ships the item".into()
@@ -507,14 +541,24 @@ fn run_step(app: &mut App, client: &RpcClient) -> Result<Value, Value> {
             let path = sess.path.ok_or_else(|| json!({"need_path": true}))?;
             match (path, step) {
                 ("complete", 6) => {
-                    let sig = send(client, &[ix_approve(&env.buyer.pubkey(), &sess.deal)], &env.buyer.pubkey(), &[&env.buyer])
-                        .map_err(|e| json!({"error": e}))?;
+                    let sig = send(
+                        client,
+                        &[ix_approve(&env.buyer.pubkey(), &sess.deal)],
+                        &env.buyer.pubkey(),
+                        &[&env.buyer],
+                    )
+                    .map_err(|e| json!({"error": e}))?;
                     txs.push(("approve_milestone (Buyer)".into(), sig));
                     "Item arrived — Buyer confirmed delivery on-chain".into()
                 }
                 ("complete", 7) => {
-                    let sig = send(client, &[ix_approve(&env.seller.pubkey(), &sess.deal)], &env.seller.pubkey(), &[&env.seller])
-                        .map_err(|e| json!({"error": e}))?;
+                    let sig = send(
+                        client,
+                        &[ix_approve(&env.seller.pubkey(), &sess.deal)],
+                        &env.seller.pubkey(),
+                        &[&env.seller],
+                    )
+                    .map_err(|e| json!({"error": e}))?;
                     txs.push(("approve_milestone (Seller)".into(), sig));
                     "Seller co-confirmed — 2-of-2 release approvals recorded".into()
                 }
@@ -535,13 +579,20 @@ fn run_step(app: &mut App, client: &RpcClient) -> Result<Value, Value> {
                     let sig = send(client, &[ix], &env.seller.pubkey(), &[&env.seller])
                         .map_err(|e| json!({"error": e}))?;
                     txs.push(("release_milestone (permissionless crank)".into(), sig));
-                    "Payment released to Seller — final settlement, no chargebacks. Deal complete".into()
+                    "Payment released to Seller — final settlement, no chargebacks. Deal complete"
+                        .into()
                 }
                 ("dispute", 6) => {
-                    let sig = send(client, &[ix_raise(&env.buyer.pubkey(), &sess.deal)], &env.buyer.pubkey(), &[&env.buyer])
-                        .map_err(|e| json!({"error": e}))?;
+                    let sig = send(
+                        client,
+                        &[ix_raise(&env.buyer.pubkey(), &sess.deal)],
+                        &env.buyer.pubkey(),
+                        &[&env.buyer],
+                    )
+                    .map_err(|e| json!({"error": e}))?;
                     txs.push(("raise_deadlock (Buyer)".into(), sig));
-                    "Buyer raised a dispute — funds stay locked; the pre-agreed rules now govern".into()
+                    "Buyer raised a dispute — funds stay locked; the pre-agreed rules now govern"
+                        .into()
                 }
                 ("dispute", 7) => {
                     for (kp, who) in [(&env.buyer, "Buyer"), (&env.seller, "Seller")] {
@@ -574,7 +625,8 @@ fn run_step(app: &mut App, client: &RpcClient) -> Result<Value, Value> {
                     let sig = send(client, &[ix], &env.buyer.pubkey(), &[&env.buyer])
                         .map_err(|e| json!({"error": e}))?;
                     txs.push(("resolve (permissionless crank)".into(), sig));
-                    "Settlement executed: 600 dUSD to Seller, 600 dUSD back to Buyer. Deal complete".into()
+                    "Settlement executed: 600 dUSD to Seller, 600 dUSD back to Buyer. Deal complete"
+                        .into()
                 }
                 _ => return Err(json!({"error": "demo finished — start a new deal"})),
             }
@@ -622,14 +674,35 @@ fn state_json(app: &App, client: &RpcClient) -> Value {
 
     let env_done = app.env.is_some();
     let mut steps = vec![];
-    let next = if !env_done { 0 } else if app.sess.is_none() { 1 } else { app.sess.as_ref().unwrap().next_step };
+    let next = if !env_done {
+        0
+    } else if app.sess.is_none() {
+        1
+    } else {
+        app.sess.as_ref().unwrap().next_step
+    };
     let path = app.sess.as_ref().and_then(|s| s.path);
 
     let mut push = |idx: usize, label: &str, desc: &str, txs: Vec<Value>| {
-        let status = if idx < next { "done" } else if idx == next { "next" } else { "todo" };
+        let status = if idx < next {
+            "done"
+        } else if idx == next {
+            "next"
+        } else {
+            "todo"
+        };
         steps.push(json!({"idx": idx, "label": label, "desc": desc, "status": status, "txs": txs}));
     };
-    let env_txs: Vec<Value> = app.env.as_ref().map(|e| e.setup_log.iter().map(|(l, s)| json!({"label": l, "sig": s})).collect()).unwrap_or_default();
+    let env_txs: Vec<Value> = app
+        .env
+        .as_ref()
+        .map(|e| {
+            e.setup_log
+                .iter()
+                .map(|(l, s)| json!({"label": l, "sig": s}))
+                .collect()
+        })
+        .unwrap_or_default();
     push(0, base_steps[0].0, base_steps[0].1, env_txs);
     for i in 1..6 {
         let txs = app
@@ -639,7 +712,11 @@ fn state_json(app: &App, client: &RpcClient) -> Value {
                 s.log
                     .iter()
                     .filter(|l| l.step == i)
-                    .flat_map(|l| l.txs.iter().map(|(tl, sig)| json!({"label": tl, "sig": sig})))
+                    .flat_map(|l| {
+                        l.txs
+                            .iter()
+                            .map(|(tl, sig)| json!({"label": tl, "sig": sig}))
+                    })
                     .collect::<Vec<_>>()
             })
             .unwrap_or_default();
@@ -660,7 +737,11 @@ fn state_json(app: &App, client: &RpcClient) -> Value {
                     s.log
                         .iter()
                         .filter(|l| l.step == i)
-                        .flat_map(|l| l.txs.iter().map(|(tl, sig)| json!({"label": tl, "sig": sig})))
+                        .flat_map(|l| {
+                            l.txs
+                                .iter()
+                                .map(|(tl, sig)| json!({"label": tl, "sig": sig}))
+                        })
                         .collect::<Vec<_>>()
                 })
                 .unwrap_or_default();
@@ -800,7 +881,10 @@ fn certificate_html(app: &App, client: &RpcClient) -> String {
         deal = sess.deal,
         hash = hex(&sess.terms_hash),
         state = state,
-        now = ts(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64),
+        now = ts(SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64),
         signed_rows = signed_rows,
         milestone_row = milestone_row,
         tx_rows = tx_rows,
@@ -812,7 +896,10 @@ fn certificate_html(app: &App, client: &RpcClient) -> String {
 
 fn main() {
     let client = RpcClient::new(URL.to_string());
-    let app = Mutex::new(App { env: None, sess: None });
+    let app = Mutex::new(App {
+        env: None,
+        sess: None,
+    });
     let server = Server::http(("127.0.0.1", PORT)).expect("bind");
     println!("Latch demo → http://localhost:{PORT}");
 
@@ -823,8 +910,14 @@ fn main() {
         let _ = request.as_reader().read_to_string(&mut body);
 
         let (content, ctype): (String, &str) = match (method, url.as_str()) {
-            (Method::Get, "/") => (include_str!("index.html").to_string(), "text/html; charset=utf-8"),
-            (Method::Get, "/api/state") => (state_json(&app.lock().unwrap(), &client).to_string(), "application/json"),
+            (Method::Get, "/") => (
+                include_str!("index.html").to_string(),
+                "text/html; charset=utf-8",
+            ),
+            (Method::Get, "/api/state") => (
+                state_json(&app.lock().unwrap(), &client).to_string(),
+                "application/json",
+            ),
             (Method::Post, "/api/next") => {
                 let mut a = app.lock().unwrap();
                 let out = match run_step(&mut a, &client) {
@@ -839,8 +932,14 @@ fn main() {
                     .ok()
                     .and_then(|v| v["path"].as_str().map(String::from));
                 let out = match (choice.as_deref(), a.sess.as_mut()) {
-                    (Some("complete"), Some(s)) => { s.path = Some("complete"); json!({"ok": true}) }
-                    (Some("dispute"), Some(s)) => { s.path = Some("dispute"); json!({"ok": true}) }
+                    (Some("complete"), Some(s)) => {
+                        s.path = Some("complete");
+                        json!({"ok": true})
+                    }
+                    (Some("dispute"), Some(s)) => {
+                        s.path = Some("dispute");
+                        json!({"ok": true})
+                    }
                     _ => json!({"error": "invalid path"}),
                 };
                 (out.to_string(), "application/json")
@@ -850,11 +949,17 @@ fn main() {
                 a.sess = None;
                 (json!({"ok": true}).to_string(), "application/json")
             }
-            (Method::Get, "/certificate") => (certificate_html(&app.lock().unwrap(), &client), "text/html; charset=utf-8"),
+            (Method::Get, "/certificate") => (
+                certificate_html(&app.lock().unwrap(), &client),
+                "text/html; charset=utf-8",
+            ),
             (Method::Get, "/agreement.txt") => {
                 let a = app.lock().unwrap();
                 (
-                    a.sess.as_ref().map(|s| s.agreement.clone()).unwrap_or_else(|| "no deal yet".into()),
+                    a.sess
+                        .as_ref()
+                        .map(|s| s.agreement.clone())
+                        .unwrap_or_else(|| "no deal yet".into()),
                     "text/plain; charset=utf-8",
                 )
             }

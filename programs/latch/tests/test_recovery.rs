@@ -1,9 +1,9 @@
 mod common;
 
 use common::*;
+use latch::state::DealState;
 use solana_keypair::Keypair;
 use solana_signer::Signer;
-use latch::state::DealState;
 
 #[test]
 fn two_of_three_recovery() {
@@ -24,7 +24,10 @@ fn two_of_three_recovery() {
     let exec = ix_recovery_execute(&f.deal, &f.mint, &f.alice_ata, &f.bob_ata, &f.token_program);
 
     // No proposal yet.
-    assert_err(send(&mut f.svm, &[exec.clone()], &f.alice.pubkey(), &[&f.alice]), "NoActiveProposal");
+    assert_err(
+        send(&mut f.svm, &[exec.clone()], &f.alice.pubkey(), &[&f.alice]),
+        "NoActiveProposal",
+    );
 
     // One signature is below the threshold.
     let ix = ix_recovery_sign(&r1.pubkey(), &f.deal, 1000);
@@ -65,21 +68,33 @@ fn recovery_gating() {
 
     // Not valid before funding.
     let ix = ix_recovery_sign(&r1.pubkey(), &f.deal, 0);
-    assert_err(send(&mut f.svm, &[ix], &r1.pubkey(), &[&r1]), "InvalidState");
+    assert_err(
+        send(&mut f.svm, &[ix], &r1.pubkey(), &[&r1]),
+        "InvalidState",
+    );
     f.sign_all();
     let ix = ix_recovery_sign(&r1.pubkey(), &f.deal, 0);
-    assert_err(send(&mut f.svm, &[ix], &r1.pubkey(), &[&r1]), "InvalidState");
+    assert_err(
+        send(&mut f.svm, &[ix], &r1.pubkey(), &[&r1]),
+        "InvalidState",
+    );
 
     f.fund();
     // A party is not a recovery signer.
     let ix = ix_recovery_sign(&f.alice.pubkey(), &f.deal, 0);
-    assert_err(send(&mut f.svm, &[ix], &f.alice.pubkey(), &[&f.alice]), "NotARecoverySigner");
+    assert_err(
+        send(&mut f.svm, &[ix], &f.alice.pubkey(), &[&f.alice]),
+        "NotARecoverySigner",
+    );
 
     // Payout above the vault balance cannot execute.
     let ix = ix_recovery_sign(&r1.pubkey(), &f.deal, 2000);
     send(&mut f.svm, &[ix], &r1.pubkey(), &[&r1]).unwrap();
     let exec = ix_recovery_execute(&f.deal, &f.mint, &f.alice_ata, &f.bob_ata, &f.token_program);
-    assert_err(send(&mut f.svm, &[exec], &f.alice.pubkey(), &[&f.alice]), "PayoutExceedsVault");
+    assert_err(
+        send(&mut f.svm, &[exec], &f.alice.pubkey(), &[&f.alice]),
+        "PayoutExceedsVault",
+    );
 }
 
 #[test]

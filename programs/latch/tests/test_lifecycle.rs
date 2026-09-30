@@ -1,8 +1,8 @@
 mod common;
 
 use common::*;
-use solana_signer::Signer;
 use latch::state::DealState;
+use solana_signer::Signer;
 
 #[test]
 fn happy_path_two_party_two_milestones() {
@@ -17,16 +17,33 @@ fn happy_path_two_party_two_milestones() {
     assert!(d.parties_signed_at[0] > 0 && d.parties_signed_at[1] > 0);
 
     // Payer funds the vault in two partial deposits.
-    let ix = ix_deposit(&f.alice.pubkey(), &f.deal, &f.mint, &f.alice_ata, &f.token_program, 250);
+    let ix = ix_deposit(
+        &f.alice.pubkey(),
+        &f.deal,
+        &f.mint,
+        &f.alice_ata,
+        &f.token_program,
+        250,
+    );
     send(&mut f.svm, &[ix], &f.alice.pubkey(), &[&f.alice]).unwrap();
     assert_eq!(f.deal_state().state, DealState::Signed);
     assert_eq!(f.deal_state().deposited, 250);
-    let ix = ix_deposit(&f.alice.pubkey(), &f.deal, &f.mint, &f.alice_ata, &f.token_program, 750);
+    let ix = ix_deposit(
+        &f.alice.pubkey(),
+        &f.deal,
+        &f.mint,
+        &f.alice_ata,
+        &f.token_program,
+        750,
+    );
     send(&mut f.svm, &[ix], &f.alice.pubkey(), &[&f.alice]).unwrap();
     let d = f.deal_state();
     assert_eq!(d.state, DealState::Funded);
     assert_eq!(d.deposited, 1000);
-    assert_eq!(token_balance(&f.svm, &vault_ata(&f.deal, &f.mint, &f.token_program)), 1000);
+    assert_eq!(
+        token_balance(&f.svm, &vault_ata(&f.deal, &f.mint, &f.token_program)),
+        1000
+    );
 
     // Everyone confirms readiness.
     f.activate();
@@ -56,7 +73,10 @@ fn happy_path_two_party_two_milestones() {
     assert_eq!(d.state, DealState::Completed);
     assert_eq!(d.released_total, 1000);
     assert_eq!(token_balance(&f.svm, &f.bob_ata), 1000);
-    assert_eq!(token_balance(&f.svm, &vault_ata(&f.deal, &f.mint, &f.token_program)), 0);
+    assert_eq!(
+        token_balance(&f.svm, &vault_ata(&f.deal, &f.mint, &f.token_program)),
+        0
+    );
 
     // Event sequence advanced monotonically the whole way.
     assert!(d.event_seq >= 12);
@@ -89,18 +109,41 @@ fn token_2022_lifecycle() {
 
     let params = default_params(&alice.pubkey(), &bob.pubkey(), vec![5000]);
     let deal = deal_pda(&alice.pubkey(), params.deal_id);
-    send(&mut svm, &[ix_create_deal(&alice.pubkey(), &mint, &tp, params)], &alice.pubkey(), &[&alice])
-        .unwrap();
+    send(
+        &mut svm,
+        &[ix_create_deal(&alice.pubkey(), &mint, &tp, params)],
+        &alice.pubkey(),
+        &[&alice],
+    )
+    .unwrap();
     for kp in [alice.insecure_clone(), bob.insecure_clone()] {
-        send(&mut svm, &[ix_sign_terms(&kp.pubkey(), &deal, true)], &kp.pubkey(), &[&kp]).unwrap();
+        send(
+            &mut svm,
+            &[ix_sign_terms(&kp.pubkey(), &deal, true)],
+            &kp.pubkey(),
+            &[&kp],
+        )
+        .unwrap();
     }
     let ix = ix_deposit(&alice.pubkey(), &deal, &mint, &alice_ata, &tp, 5000);
     send(&mut svm, &[ix], &alice.pubkey(), &[&alice]).unwrap();
     for kp in [alice.insecure_clone(), bob.insecure_clone()] {
-        send(&mut svm, &[ix_confirm_ready(&kp.pubkey(), &deal)], &kp.pubkey(), &[&kp]).unwrap();
+        send(
+            &mut svm,
+            &[ix_confirm_ready(&kp.pubkey(), &deal)],
+            &kp.pubkey(),
+            &[&kp],
+        )
+        .unwrap();
     }
     for kp in [alice.insecure_clone(), bob.insecure_clone()] {
-        send(&mut svm, &[ix_approve_milestone(&kp.pubkey(), &deal, 0)], &kp.pubkey(), &[&kp]).unwrap();
+        send(
+            &mut svm,
+            &[ix_approve_milestone(&kp.pubkey(), &deal, 0)],
+            &kp.pubkey(),
+            &[&kp],
+        )
+        .unwrap();
     }
     let ix = ix_release_milestone(&deal, &mint, &bob_ata, &tp, 0);
     send(&mut svm, &[ix], &alice.pubkey(), &[&alice]).unwrap();

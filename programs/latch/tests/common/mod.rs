@@ -7,15 +7,14 @@ use {
         AccountDeserialize, InstructionData, ToAccountMetas,
     },
     anchor_spl::{
-        associated_token::get_associated_token_address_with_program_id,
-        token_2022::spl_token_2022,
+        associated_token::get_associated_token_address_with_program_id, token_2022::spl_token_2022,
     },
+    latch::{state::*, CreateDealParams},
     litesvm::{types::TransactionResult, LiteSVM},
     solana_keypair::Keypair,
     solana_message::{Message, VersionedMessage},
     solana_signer::Signer,
     solana_transaction::versioned::VersionedTransaction,
-    latch::{state::*, CreateDealParams},
 };
 
 pub const SOL: u64 = 1_000_000_000;
@@ -102,7 +101,13 @@ pub fn create_mint(
     let len = MINT_LEN;
     let rent = svm.minimum_balance_for_rent_exemption(len);
     let ixs = [
-        system_instruction::create_account(&payer.pubkey(), &mint.pubkey(), rent, len as u64, token_program),
+        system_instruction::create_account(
+            &payer.pubkey(),
+            &mint.pubkey(),
+            rent,
+            len as u64,
+            token_program,
+        ),
         spl_token_2022::instruction::initialize_mint2(
             token_program,
             &mint.pubkey(),
@@ -185,10 +190,19 @@ pub fn create_mint_2022_with_extensions(
         }
     }
     // A default-frozen mint needs a freeze authority to be valid.
-    let freeze = exts.iter().any(|e| matches!(e, TestExt::DefaultFrozen)).then_some(mint_authority);
+    let freeze = exts
+        .iter()
+        .any(|e| matches!(e, TestExt::DefaultFrozen))
+        .then_some(mint_authority);
     ixs.push(
-        spl_token_2022::instruction::initialize_mint2(&tp, &mint.pubkey(), mint_authority, freeze, 6)
-            .unwrap(),
+        spl_token_2022::instruction::initialize_mint2(
+            &tp,
+            &mint.pubkey(),
+            mint_authority,
+            freeze,
+            6,
+        )
+        .unwrap(),
     );
     send(svm, &ixs, &payer.pubkey(), &[payer, &mint]).unwrap();
     mint.pubkey()
@@ -205,21 +219,35 @@ pub fn create_token_account(
     // Token-2022 accounts need space for account extensions the mint requires
     // (e.g. TransferFeeAmount on transfer-fee mints).
     let len = if *token_program == token_2022_id() {
-        use spl_token_2022::extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensions};
+        use spl_token_2022::extension::{
+            BaseStateWithExtensions, ExtensionType, StateWithExtensions,
+        };
         let mint_data = svm.get_account(mint).unwrap().data;
         let state = StateWithExtensions::<spl_token_2022::state::Mint>::unpack(&mint_data).unwrap();
         let required = ExtensionType::get_required_init_account_extensions(
             &state.get_extension_types().unwrap(),
         );
-        ExtensionType::try_calculate_account_len::<spl_token_2022::state::Account>(&required).unwrap()
+        ExtensionType::try_calculate_account_len::<spl_token_2022::state::Account>(&required)
+            .unwrap()
     } else {
         TOKEN_ACCOUNT_LEN
     };
     let rent = svm.minimum_balance_for_rent_exemption(len);
     let ixs = [
-        system_instruction::create_account(&payer.pubkey(), &account.pubkey(), rent, len as u64, token_program),
-        spl_token_2022::instruction::initialize_account3(token_program, &account.pubkey(), mint, owner)
-            .unwrap(),
+        system_instruction::create_account(
+            &payer.pubkey(),
+            &account.pubkey(),
+            rent,
+            len as u64,
+            token_program,
+        ),
+        spl_token_2022::instruction::initialize_account3(
+            token_program,
+            &account.pubkey(),
+            mint,
+            owner,
+        )
+        .unwrap(),
     ];
     send(svm, &ixs, &payer.pubkey(), &[payer, &account]).unwrap();
     account.pubkey()
@@ -331,7 +359,10 @@ pub fn ix_create_deal(
 pub fn ix_sign_terms(party: &Pubkey, deal: &Pubkey, consent: bool) -> Instruction {
     Instruction::new_with_bytes(
         latch::id(),
-        &latch::instruction::SignTerms { consent_true_deadlock: consent }.data(),
+        &latch::instruction::SignTerms {
+            consent_true_deadlock: consent,
+        }
+        .data(),
         latch::accounts::SignTerms {
             party: *party,
             deal: *deal,
@@ -582,15 +613,37 @@ impl Fixture {
         let alice_ata = create_token_account(&mut svm, &alice, &alice.pubkey(), &mint, &tp);
         let bob_ata = create_token_account(&mut svm, &alice, &bob.pubkey(), &mint, &tp);
         let alice_kp = alice.insecure_clone();
-        mint_to(&mut svm, &alice, &alice_kp, &mint, &alice_ata, 1_000_000_000, &tp);
+        mint_to(
+            &mut svm,
+            &alice,
+            &alice_kp,
+            &mint,
+            &alice_ata,
+            1_000_000_000,
+            &tp,
+        );
 
         let mut params = default_params(&alice.pubkey(), &bob.pubkey(), milestones);
         tweak(&mut params);
         let deal = deal_pda(&alice.pubkey(), params.deal_id);
-        send(&mut svm, &[ix_create_deal(&alice.pubkey(), &mint, &tp, params)], &alice.pubkey(), &[&alice])
-            .unwrap();
+        send(
+            &mut svm,
+            &[ix_create_deal(&alice.pubkey(), &mint, &tp, params)],
+            &alice.pubkey(),
+            &[&alice],
+        )
+        .unwrap();
 
-        Fixture { svm, alice, bob, mint, token_program: tp, deal, alice_ata, bob_ata }
+        Fixture {
+            svm,
+            alice,
+            bob,
+            mint,
+            token_program: tp,
+            deal,
+            alice_ata,
+            bob_ata,
+        }
     }
 
     pub fn sign_all(&mut self) {

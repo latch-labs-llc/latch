@@ -23,7 +23,12 @@ pub fn handle_cancel_draft(ctx: Context<CancelDraft>) -> Result<()> {
     deal.state = DealState::Cancelled;
     let now = Clock::get()?.unix_timestamp;
     let seq = deal.next_seq();
-    emit_cpi!(DealCancelled { deal: deal.key(), seq, refunded_to_payer: 0, timestamp: now });
+    emit_cpi!(DealCancelled {
+        deal: deal.key(),
+        seq,
+        refunded_to_payer: 0,
+        timestamp: now
+    });
     Ok(())
 }
 
@@ -80,7 +85,12 @@ pub fn handle_cancel_sign(ctx: Context<CancelSign>) -> Result<()> {
         let deal = &mut ctx.accounts.deal;
         deal.state = DealState::Cancelled;
         let seq = deal.next_seq();
-        emit_cpi!(DealCancelled { deal: deal.key(), seq, refunded_to_payer: refund, timestamp: now });
+        emit_cpi!(DealCancelled {
+            deal: deal.key(),
+            seq,
+            refunded_to_payer: refund,
+            timestamp: now
+        });
     }
     Ok(())
 }

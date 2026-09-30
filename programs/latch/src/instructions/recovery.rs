@@ -8,7 +8,10 @@ use crate::state::*;
 
 fn require_post_funding(deal: &Deal) -> Result<()> {
     require!(
-        matches!(deal.state, DealState::Funded | DealState::Active | DealState::Deadlocked),
+        matches!(
+            deal.state,
+            DealState::Funded | DealState::Active | DealState::Deadlocked
+        ),
         EscrowError::InvalidState
     );
     Ok(())
@@ -30,7 +33,9 @@ pub fn handle_recovery_sign(ctx: Context<RecoverySign>, amount_to_payee: u64) ->
     require_post_funding(deal)?;
 
     let signer = ctx.accounts.signer.key();
-    let idx = deal.recovery_index(&signer).ok_or(EscrowError::NotARecoverySigner)?;
+    let idx = deal
+        .recovery_index(&signer)
+        .ok_or(EscrowError::NotARecoverySigner)?;
     let bit = 1u8 << idx;
     if !deal.recovery_proposal_active || deal.recovery_proposed_to_payee != amount_to_payee {
         deal.recovery_proposal_active = true;
@@ -118,7 +123,9 @@ pub fn handle_recovery_execute(ctx: Context<RecoveryExecute>) -> Result<()> {
     let remaining = ctx.accounts.vault.amount;
     let to_payee = deal.recovery_proposed_to_payee;
     require!(to_payee <= remaining, EscrowError::PayoutExceedsVault);
-    let to_payer = remaining.checked_sub(to_payee).ok_or(EscrowError::Overflow)?;
+    let to_payer = remaining
+        .checked_sub(to_payee)
+        .ok_or(EscrowError::Overflow)?;
 
     transfer_from_vault(
         &ctx.accounts.deal,

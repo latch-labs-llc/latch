@@ -1,8 +1,8 @@
 mod common;
 
 use common::*;
+use latch::state::{DeadlockRule, DealState, TimerMode};
 use solana_signer::Signer;
-use latch::state::{DealState, DeadlockRule, TimerMode};
 
 fn activation_fixture(rule: DeadlockRule, timeout: i64) -> Fixture {
     let mut f = Fixture::new(vec![1000], move |p| {
@@ -21,7 +21,10 @@ fn from_activation_auto_release_without_any_deadlock() {
     let mut f = activation_fixture(DeadlockRule::TimeoutRelease, 3600);
     let rix = ix_resolve(&f.deal, &f.mint, &f.alice_ata, &f.bob_ata, &f.token_program);
 
-    assert_err(send(&mut f.svm, &[rix.clone()], &f.alice.pubkey(), &[&f.alice]), "TimeoutNotElapsed");
+    assert_err(
+        send(&mut f.svm, &[rix.clone()], &f.alice.pubkey(), &[&f.alice]),
+        "TimeoutNotElapsed",
+    );
     warp(&mut f.svm, 3601);
     send(&mut f.svm, &[rix], &f.alice.pubkey(), &[&f.alice]).unwrap();
     assert_eq!(f.deal_state().state, DealState::Completed);
@@ -48,14 +51,20 @@ fn from_activation_dispute_pauses_and_withdraw_resumes() {
 
     // Only the raiser can withdraw.
     let ix = ix_withdraw_deadlock(&f.bob.pubkey(), &f.deal);
-    assert_err(send(&mut f.svm, &[ix], &f.bob.pubkey(), &[&f.bob]), "OnlyRaiserMayWithdraw");
+    assert_err(
+        send(&mut f.svm, &[ix], &f.bob.pubkey(), &[&f.bob]),
+        "OnlyRaiserMayWithdraw",
+    );
     let ix = ix_withdraw_deadlock(&f.alice.pubkey(), &f.deal);
     send(&mut f.svm, &[ix], &f.alice.pubkey(), &[&f.alice]).unwrap();
     assert_eq!(f.deal_state().state, DealState::Active);
 
     // Clock resumes with 1800s banked: 1799 more isn't enough, 1801 is.
     warp(&mut f.svm, 1799);
-    assert_err(send(&mut f.svm, &[rix.clone()], &f.bob.pubkey(), &[&f.bob]), "TimeoutNotElapsed");
+    assert_err(
+        send(&mut f.svm, &[rix.clone()], &f.bob.pubkey(), &[&f.bob]),
+        "TimeoutNotElapsed",
+    );
     warp(&mut f.svm, 2);
     send(&mut f.svm, &[rix], &f.bob.pubkey(), &[&f.bob]).unwrap();
     assert_eq!(token_balance(&f.svm, &f.bob_ata), 1000);
@@ -105,7 +114,10 @@ fn from_deadlock_mode_cannot_resolve_while_active() {
     f.to_active();
     warp(&mut f.svm, 1_000_000);
     let rix = ix_resolve(&f.deal, &f.mint, &f.alice_ata, &f.bob_ata, &f.token_program);
-    assert_err(send(&mut f.svm, &[rix], &f.alice.pubkey(), &[&f.alice]), "InvalidState");
+    assert_err(
+        send(&mut f.svm, &[rix], &f.alice.pubkey(), &[&f.alice]),
+        "InvalidState",
+    );
 }
 
 #[test]
@@ -120,7 +132,10 @@ fn from_activation_invalid_for_tiebreaker_and_true_deadlock() {
         params.timer_mode = TimerMode::FromActivation;
         params.tie_breaker = anchor_lang::prelude::Pubkey::new_unique();
         let ix = ix_create_deal(&alice.pubkey(), &mint, &tp, params);
-        assert_err(send(&mut svm, &[ix], &alice.pubkey(), &[&alice]), "InvalidTimerMode");
+        assert_err(
+            send(&mut svm, &[ix], &alice.pubkey(), &[&alice]),
+            "InvalidTimerMode",
+        );
     }
 }
 
@@ -133,7 +148,10 @@ fn true_deadlock_still_never_times_out() {
     let rix = ix_resolve(&f.deal, &f.mint, &f.alice_ata, &f.bob_ata, &f.token_program);
     // Not resolvable while Active (FromDeadlock mode).
     warp(&mut f.svm, 100 * 365 * 24 * 3600);
-    assert_err(send(&mut f.svm, &[rix.clone()], &f.alice.pubkey(), &[&f.alice]), "InvalidState");
+    assert_err(
+        send(&mut f.svm, &[rix.clone()], &f.alice.pubkey(), &[&f.alice]),
+        "InvalidState",
+    );
     // Nor by time once deadlocked.
     let ix = ix_raise_deadlock(&f.alice.pubkey(), &f.deal);
     send(&mut f.svm, &[ix], &f.alice.pubkey(), &[&f.alice]).unwrap();

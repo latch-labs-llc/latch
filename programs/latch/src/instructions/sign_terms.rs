@@ -21,7 +21,10 @@ pub fn handle_sign_terms(ctx: Context<SignTerms>, consent_true_deadlock: bool) -
     require!(deal.signed & bit == 0, EscrowError::AlreadySigned);
 
     if deal.deadlock_rule == DeadlockRule::TrueDeadlock {
-        require!(consent_true_deadlock, EscrowError::TrueDeadlockConsentRequired);
+        require!(
+            consent_true_deadlock,
+            EscrowError::TrueDeadlockConsentRequired
+        );
         deal.deadlock_consent |= bit;
     }
 

@@ -32,8 +32,9 @@ fn zk_svm() -> (litesvm::LiteSVM, Keypair) {
     // add_builtin creates the program account owned by the BPF loader, but
     // native programs must be owned by the native loader (as on devnet) or
     // invocation fails with "Unsupported program id".
-    let native_loader: anchor_lang::prelude::Pubkey =
-        "NativeLoader1111111111111111111111111111111".parse().unwrap();
+    let native_loader: anchor_lang::prelude::Pubkey = "NativeLoader1111111111111111111111111111111"
+        .parse()
+        .unwrap();
     svm.set_account(
         zk_elgamal_proof_program::id(),
         solana_account::Account {
@@ -60,7 +61,11 @@ fn verify_pubkey_validity_proof() {
     let ix = ProofInstruction::VerifyPubkeyValidity.encode_verify_proof(None, &proof);
 
     let res = send(&mut svm, &[ix], &payer.pubkey(), &[&payer]);
-    assert!(res.is_ok(), "valid proof rejected: {:?}", res.err().map(|e| e.meta.logs));
+    assert!(
+        res.is_ok(),
+        "valid proof rejected: {:?}",
+        res.err().map(|e| e.meta.logs)
+    );
 }
 
 #[test]
@@ -90,7 +95,11 @@ fn verify_zero_ciphertext_proof() {
     let proof = ZeroCiphertextProofData::new(&elgamal, &ciphertext_of_zero).unwrap();
     let ix = ProofInstruction::VerifyZeroCiphertext.encode_verify_proof(None, &proof);
     let res = send(&mut svm, &[ix], &payer.pubkey(), &[&payer]);
-    assert!(res.is_ok(), "zero-ciphertext proof rejected: {:?}", res.err().map(|e| e.meta.logs));
+    assert!(
+        res.is_ok(),
+        "zero-ciphertext proof rejected: {:?}",
+        res.err().map(|e| e.meta.logs)
+    );
 
     // And the same proof structure over a NON-zero balance must fail:
     // you cannot prove an encrypted 42 is zero.

@@ -25,7 +25,10 @@ pub fn handle_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
     require!(amount > 0, EscrowError::ZeroDeposit);
 
     let payer_idx = deal.require_party(&ctx.accounts.payer.key())?;
-    require!(payer_idx == deal.payer_idx, EscrowError::OnlyPayerMayDeposit);
+    require!(
+        payer_idx == deal.payer_idx,
+        EscrowError::OnlyPayerMayDeposit
+    );
 
     let vault_before = ctx.accounts.vault.amount;
     token_interface::transfer_checked(
@@ -52,7 +55,10 @@ pub fn handle_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         .ok_or(EscrowError::Overflow)?;
 
     let deal = &mut ctx.accounts.deal;
-    deal.deposited = deal.deposited.checked_add(credited).ok_or(EscrowError::Overflow)?;
+    deal.deposited = deal
+        .deposited
+        .checked_add(credited)
+        .ok_or(EscrowError::Overflow)?;
     require!(deal.deposited <= deal.total_amount, EscrowError::OverFunded);
 
     let now = Clock::get()?.unix_timestamp;

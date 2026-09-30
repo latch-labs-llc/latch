@@ -63,7 +63,10 @@ pub fn handle_create_deal(ctx: Context<CreateDeal>, params: CreateDealParams) ->
     require!(n >= 2 && n <= MAX_PARTIES, EscrowError::InvalidParties);
     for i in 0..n {
         for j in (i + 1)..n {
-            require!(params.parties[i] != params.parties[j], EscrowError::DuplicateParty);
+            require!(
+                params.parties[i] != params.parties[j],
+                EscrowError::DuplicateParty
+            );
         }
     }
     require!(
@@ -82,14 +85,20 @@ pub fn handle_create_deal(ctx: Context<CreateDeal>, params: CreateDealParams) ->
     );
 
     let m = params.milestone_amounts.len();
-    require!(m >= 1 && m <= MAX_MILESTONES, EscrowError::InvalidMilestones);
+    require!(
+        m >= 1 && m <= MAX_MILESTONES,
+        EscrowError::InvalidMilestones
+    );
     require!(params.total_amount > 0, EscrowError::InvalidMilestones);
     let mut sum: u64 = 0;
     for &amount in &params.milestone_amounts {
         require!(amount > 0, EscrowError::InvalidMilestones);
         sum = sum.checked_add(amount).ok_or(EscrowError::Overflow)?;
     }
-    require!(sum == params.total_amount, EscrowError::MilestoneSumMismatch);
+    require!(
+        sum == params.total_amount,
+        EscrowError::MilestoneSumMismatch
+    );
 
     match params.deadlock_rule {
         DeadlockRule::TimeoutRelease
@@ -110,16 +119,31 @@ pub fn handle_create_deal(ctx: Context<CreateDeal>, params: CreateDealParams) ->
     // Rules with no timeout path have no clock; FromActivation would be
     // meaningless for TieBreaker and must never exist for TrueDeadlock (no
     // configuration may create a timeout backdoor into a true deadlock).
-    if matches!(params.deadlock_rule, DeadlockRule::TieBreaker | DeadlockRule::TrueDeadlock) {
-        require!(params.timer_mode == TimerMode::FromDeadlock, EscrowError::InvalidTimerMode);
+    if matches!(
+        params.deadlock_rule,
+        DeadlockRule::TieBreaker | DeadlockRule::TrueDeadlock
+    ) {
+        require!(
+            params.timer_mode == TimerMode::FromDeadlock,
+            EscrowError::InvalidTimerMode
+        );
     }
-    require!(params.recovery_delay_secs >= 0, EscrowError::InvalidRecoveryConfig);
+    require!(
+        params.recovery_delay_secs >= 0,
+        EscrowError::InvalidRecoveryConfig
+    );
     if params.deadlock_rule == DeadlockRule::AutoSplit {
-        require!(params.split_bps as u64 <= BPS_DENOMINATOR, EscrowError::InvalidDeadlockParams);
+        require!(
+            params.split_bps as u64 <= BPS_DENOMINATOR,
+            EscrowError::InvalidDeadlockParams
+        );
     }
 
     let r = params.recovery_signers.len();
-    require!(r >= 1 && r <= MAX_RECOVERY_SIGNERS, EscrowError::InvalidRecoveryConfig);
+    require!(
+        r >= 1 && r <= MAX_RECOVERY_SIGNERS,
+        EscrowError::InvalidRecoveryConfig
+    );
     require!(
         params.recovery_threshold >= 1 && (params.recovery_threshold as usize) <= r,
         EscrowError::InvalidRecoveryConfig
@@ -134,7 +158,10 @@ pub fn handle_create_deal(ctx: Context<CreateDeal>, params: CreateDealParams) ->
     }
 
     let flags = vet_mint(&ctx.accounts.mint.to_account_info())?;
-    require!(flags & !params.accepted_risk_flags == 0, EscrowError::RiskFlagsNotAccepted);
+    require!(
+        flags & !params.accepted_risk_flags == 0,
+        EscrowError::RiskFlagsNotAccepted
+    );
 
     let now = Clock::get()?.unix_timestamp;
     let deal = &mut ctx.accounts.deal;
@@ -158,7 +185,11 @@ pub fn handle_create_deal(ctx: Context<CreateDeal>, params: CreateDealParams) ->
     deal.accepted_risk_flags = params.accepted_risk_flags;
     deal.num_milestones = m as u8;
     for (i, &amount) in params.milestone_amounts.iter().enumerate() {
-        deal.milestones[i] = Milestone { amount, approvals: 0, released: false };
+        deal.milestones[i] = Milestone {
+            amount,
+            approvals: 0,
+            released: false,
+        };
     }
     deal.deadlock_rule = params.deadlock_rule;
     deal.timer_mode = params.timer_mode;

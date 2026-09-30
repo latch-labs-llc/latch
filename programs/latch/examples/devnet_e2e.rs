@@ -15,15 +15,14 @@ use {
         AccountDeserialize, InstructionData, ToAccountMetas,
     },
     anchor_spl::{
-        associated_token::get_associated_token_address_with_program_id,
-        token_2022::spl_token_2022,
+        associated_token::get_associated_token_address_with_program_id, token_2022::spl_token_2022,
     },
+    latch::{state::*, CreateDealParams},
     solana_keypair::Keypair,
     solana_message::{Message, VersionedMessage},
     solana_rpc_client::rpc_client::RpcClient,
     solana_signer::Signer,
     solana_transaction::versioned::VersionedTransaction,
-    latch::{state::*, CreateDealParams},
     std::{thread::sleep, time::Duration},
 };
 
@@ -61,12 +60,19 @@ fn main() {
 
     let balance = client.get_balance(&alice.pubkey()).unwrap();
     println!("alice devnet balance: {} SOL", balance as f64 / 1e9);
-    assert!(balance > 400_000_000, "need ≥0.4 devnet SOL — use faucet.solana.com");
+    assert!(
+        balance > 400_000_000,
+        "need ≥0.4 devnet SOL — use faucet.solana.com"
+    );
 
     // Give bob a little SOL to sign his own transactions.
     let sig = send(
         &client,
-        &[system_instruction::transfer(&alice.pubkey(), &bob.pubkey(), 50_000_000)],
+        &[system_instruction::transfer(
+            &alice.pubkey(),
+            &bob.pubkey(),
+            50_000_000,
+        )],
         &alice.pubkey(),
         &[&alice],
     );
@@ -129,7 +135,15 @@ fn main() {
     let bob_ta = make_ata(&bob.pubkey());
     let sig = send(
         &client,
-        &[spl_token_2022::instruction::mint_to(&tp, &mint, &alice_ta, &alice.pubkey(), &[], 2_000_000_000).unwrap()],
+        &[spl_token_2022::instruction::mint_to(
+            &tp,
+            &mint,
+            &alice_ta,
+            &alice.pubkey(),
+            &[],
+            2_000_000_000,
+        )
+        .unwrap()],
         &alice.pubkey(),
         &[&alice],
     );
@@ -189,7 +203,10 @@ fn main() {
         for kp in [&alice, &bob] {
             let ix = Instruction::new_with_bytes(
                 latch::id(),
-                &latch::instruction::SignTerms { consent_true_deadlock: true }.data(),
+                &latch::instruction::SignTerms {
+                    consent_true_deadlock: true,
+                }
+                .data(),
                 latch::accounts::SignTerms {
                     party: kp.pubkey(),
                     deal,
@@ -204,7 +221,10 @@ fn main() {
 
         let ix = Instruction::new_with_bytes(
             latch::id(),
-            &latch::instruction::Deposit { amount: 1_000_000_000 }.data(),
+            &latch::instruction::Deposit {
+                amount: 1_000_000_000,
+            }
+            .data(),
             latch::accounts::Deposit {
                 payer: alice.pubkey(),
                 deal,
@@ -275,7 +295,10 @@ fn main() {
     }
     let data = client.get_account_data(&deal).unwrap();
     let state = Deal::try_deserialize(&mut data.as_slice()).unwrap();
-    println!("  final state: {:?}, released_total: {}", state.state, state.released_total);
+    println!(
+        "  final state: {:?}, released_total: {}",
+        state.state, state.released_total
+    );
     assert_eq!(state.state, DealState::Completed);
 
     // ---------- Deal 2: deadlock → timeout refund ----------

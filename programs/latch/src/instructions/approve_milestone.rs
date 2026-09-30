@@ -15,7 +15,10 @@ pub struct ApproveMilestone<'info> {
 pub fn handle_approve_milestone(ctx: Context<ApproveMilestone>, index: u8) -> Result<()> {
     let deal = &mut ctx.accounts.deal;
     deal.require_state(DealState::Active)?;
-    require!(index < deal.num_milestones, EscrowError::MilestoneOutOfRange);
+    require!(
+        index < deal.num_milestones,
+        EscrowError::MilestoneOutOfRange
+    );
 
     let idx = deal.require_party(&ctx.accounts.party.key())?;
     let milestone = &mut deal.milestones[index as usize];

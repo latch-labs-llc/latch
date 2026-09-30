@@ -168,7 +168,8 @@ impl Deal {
     }
 
     pub fn require_party(&self, key: &Pubkey) -> Result<u8> {
-        self.party_index(key).ok_or_else(|| error!(EscrowError::NotAParty))
+        self.party_index(key)
+            .ok_or_else(|| error!(EscrowError::NotAParty))
     }
 
     /// Bitmap with one bit set per party.

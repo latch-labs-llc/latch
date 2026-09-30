@@ -122,10 +122,16 @@ pub fn handle_resolve(ctx: Context<Resolve>) -> Result<()> {
             let tie_broken =
                 deal.deadlock_rule == DeadlockRule::TieBreaker && deal.tie_breaker_decided;
             if mutual {
-                require!(deal.proposed_to_payee <= remaining, EscrowError::PayoutExceedsVault);
+                require!(
+                    deal.proposed_to_payee <= remaining,
+                    EscrowError::PayoutExceedsVault
+                );
                 (ResolutionPath::Mutual, deal.proposed_to_payee)
             } else if tie_broken {
-                require!(deal.proposed_to_payee <= remaining, EscrowError::PayoutExceedsVault);
+                require!(
+                    deal.proposed_to_payee <= remaining,
+                    EscrowError::PayoutExceedsVault
+                );
                 (ResolutionPath::TieBreaker, deal.proposed_to_payee)
             } else {
                 let payee_amount = timeout_payout(deal, remaining)?;
@@ -146,7 +152,9 @@ pub fn handle_resolve(ctx: Context<Resolve>) -> Result<()> {
         _ => return err!(EscrowError::InvalidState),
     };
 
-    let to_payer = remaining.checked_sub(to_payee).ok_or(EscrowError::Overflow)?;
+    let to_payer = remaining
+        .checked_sub(to_payee)
+        .ok_or(EscrowError::Overflow)?;
     transfer_from_vault(
         &ctx.accounts.deal,
         &ctx.accounts.mint,

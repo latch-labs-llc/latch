@@ -1,9 +1,9 @@
 mod common;
 
 use common::*;
+use latch::state::{DeadlockRule, DealState};
 use solana_keypair::Keypair;
 use solana_signer::Signer;
-use latch::state::{DealState, DeadlockRule};
 
 fn deadlocked_fixture(tweak: impl FnOnce(&mut latch::CreateDealParams)) -> Fixture {
     let mut f = Fixture::new(vec![1000], tweak);
@@ -26,7 +26,10 @@ fn timeout_release_pays_payee_after_timeout() {
     });
     let rix = resolve_ix(&f);
     // Too early.
-    assert_err(send(&mut f.svm, &[rix.clone()], &f.alice.pubkey(), &[&f.alice]), "TimeoutNotElapsed");
+    assert_err(
+        send(&mut f.svm, &[rix.clone()], &f.alice.pubkey(), &[&f.alice]),
+        "TimeoutNotElapsed",
+    );
     warp(&mut f.svm, 3601);
     send(&mut f.svm, &[rix.clone()], &f.alice.pubkey(), &[&f.alice]).unwrap();
     assert_eq!(f.deal_state().state, DealState::Completed);
@@ -104,7 +107,10 @@ fn long_sunset_refunds_after_long_wait_but_mutual_resolves_earlier() {
     });
     let rix = resolve_ix(&f);
     // Mutual agreement works before the sunset: both sign the same payout.
-    for (kp, amt) in [(f.alice.insecure_clone(), 500u64), (f.bob.insecure_clone(), 500u64)] {
+    for (kp, amt) in [
+        (f.alice.insecure_clone(), 500u64),
+        (f.bob.insecure_clone(), 500u64),
+    ] {
         let ix = ix_resolution_sign(&kp.pubkey(), &f.deal, amt);
         send(&mut f.svm, &[ix], &kp.pubkey(), &[&kp]).unwrap();
     }
@@ -119,7 +125,10 @@ fn long_sunset_refunds_after_long_wait_but_mutual_resolves_earlier() {
         p.timeout_secs = year;
     });
     let rix = resolve_ix(&f);
-    assert_err(send(&mut f.svm, &[rix.clone()], &f.alice.pubkey(), &[&f.alice]), "TimeoutNotElapsed");
+    assert_err(
+        send(&mut f.svm, &[rix.clone()], &f.alice.pubkey(), &[&f.alice]),
+        "TimeoutNotElapsed",
+    );
     warp(&mut f.svm, year + 1);
     let alice_before = token_balance(&f.svm, &f.alice_ata);
     send(&mut f.svm, &[rix.clone()], &f.alice.pubkey(), &[&f.alice]).unwrap();

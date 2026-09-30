@@ -28,7 +28,10 @@ pub struct ReleaseMilestone<'info> {
 pub fn handle_release_milestone(ctx: Context<ReleaseMilestone>, index: u8) -> Result<()> {
     let deal = &ctx.accounts.deal;
     deal.require_state(DealState::Active)?;
-    require!(index < deal.num_milestones, EscrowError::MilestoneOutOfRange);
+    require!(
+        index < deal.num_milestones,
+        EscrowError::MilestoneOutOfRange
+    );
 
     let milestone = &deal.milestones[index as usize];
     require!(!milestone.released, EscrowError::MilestoneAlreadyReleased);
@@ -53,9 +56,14 @@ pub fn handle_release_milestone(ctx: Context<ReleaseMilestone>, index: u8) -> Re
 
     let deal = &mut ctx.accounts.deal;
     deal.milestones[index as usize].released = true;
-    deal.released_total = deal.released_total.checked_add(amount).ok_or(EscrowError::Overflow)?;
+    deal.released_total = deal
+        .released_total
+        .checked_add(amount)
+        .ok_or(EscrowError::Overflow)?;
 
-    let completed = deal.milestones[..deal.num_milestones as usize].iter().all(|m| m.released);
+    let completed = deal.milestones[..deal.num_milestones as usize]
+        .iter()
+        .all(|m| m.released);
     let now = Clock::get()?.unix_timestamp;
     if completed {
         deal.state = DealState::Completed;

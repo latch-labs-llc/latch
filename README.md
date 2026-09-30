@@ -1,5 +1,7 @@
 # Latch
 
+[![CI](https://github.com/latch-labs-llc/latch/actions/workflows/ci.yml/badge.svg)](https://github.com/latch-labs-llc/latch/actions/workflows/ci.yml) [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
 **Split-control escrow for Solana.** Two or more parties lock tokenized
 consideration (stablecoins first) in a program-owned vault that no single
 party — and no company — can move. Funds release only on the parties'
