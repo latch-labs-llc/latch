@@ -26,7 +26,9 @@ use {
 const DEFAULT_RPC: &str = "https://api.devnet.solana.com";
 
 fn main() {
-    let url = std::env::args().nth(1).unwrap_or_else(|| DEFAULT_RPC.to_string());
+    let url = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| DEFAULT_RPC.to_string());
     let client = RpcClient::new(url.clone());
     let program_id = latch::id();
     println!("program: {program_id}");
@@ -39,14 +41,22 @@ fn main() {
         let batch = client
             .get_signatures_for_address_with_config(
                 &program_id,
-                GetConfirmedSignaturesForAddress2Config { before: before.take(), ..Default::default() },
+                GetConfirmedSignaturesForAddress2Config {
+                    before: before.take(),
+                    ..Default::default()
+                },
             )
             .expect("get_signatures_for_address");
         if batch.is_empty() {
             break;
         }
         let last = batch.last().unwrap().signature.clone();
-        signatures.extend(batch.into_iter().filter(|s| s.err.is_none()).map(|s| s.signature));
+        signatures.extend(
+            batch
+                .into_iter()
+                .filter(|s| s.err.is_none())
+                .map(|s| s.signature),
+        );
         if signatures.len() % 1000 == 0 {
             eprintln!("  … {} signatures", signatures.len());
         }
@@ -77,7 +87,11 @@ fn main() {
         };
         let keys: Vec<String> = v["transaction"]["message"]["accountKeys"]
             .as_array()
-            .map(|a| a.iter().filter_map(|k| k.as_str().map(String::from)).collect())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|k| k.as_str().map(String::from))
+                    .collect()
+            })
             .unwrap_or_default();
         let empty = Vec::new();
         let inner = v["meta"]["innerInstructions"].as_array().unwrap_or(&empty);
@@ -87,8 +101,12 @@ fn main() {
                 if keys.get(pidx).map(String::as_str) != Some(&program_id.to_string() as &str) {
                     continue;
                 }
-                let Some(data_b58) = ix["data"].as_str() else { continue };
-                let Ok(data) = bs58::decode(data_b58).into_vec() else { continue };
+                let Some(data_b58) = ix["data"].as_str() else {
+                    continue;
+                };
+                let Ok(data) = bs58::decode(data_b58).into_vec() else {
+                    continue;
+                };
                 // Event CPI layout: 8-byte event-ix tag, 8-byte event
                 // discriminator, then the borsh-encoded event.
                 if data.len() < 16 || &data[..8] != anchor_lang::event::EVENT_IX_TAG_LE {
