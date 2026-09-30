@@ -25,6 +25,8 @@ Maintained by Latch Labs LLC (in formation). Apache-2.0.
 | Explorer | https://explorer.solana.com/address/BT8tr7YXYLQPsLMq3qCipY1fBKyjT3gmGQB5amV2v5yv?cluster=devnet |
 | Verified hash | `4679454385e2e0edca7ac3accf4db3002f6e3c4dd0c6feae5a399742399cc205` |
 
+**Try it live (devnet):** https://latch-labs-llc.github.io/latch/ — connect Phantom, Solflare, or a zero-setup burner wallet; built-in test-token faucet.
+
 **Demo videos:** [Full sale lifecycle](https://youtu.be/69Psn335b_I) · [Dispute raised and settled on-chain](https://youtu.be/lbIxBCt56W0)
 
 ### Verify the deployed bytecode yourself
@@ -128,7 +130,8 @@ See `clients/ts/packages/*/README.md` for quickstarts.
 - `programs/latch/` — the Anchor program
 - `programs/latch/tests/` — LiteSVM test suite
 - `programs/latch/examples/devnet_e2e.rs` — scripted devnet lifecycle
-- `demo/` — reference demo server (marketplace sale + signature certificate)
+- `app/` — wallet-connected reference web app (live at the link above)
+- `demo/` — scripted reference demo server (marketplace sale + signature certificate)
 - `DECISIONS.md` — design decision log with reasoning
 - `SECURITY_NOTES.md` — assumptions, trust boundaries, known risks (for reviewers)
 - `ZK_NOTES.md` — confidential-transfer status and phase-2 design
