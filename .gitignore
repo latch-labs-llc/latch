@@ -6,3 +6,8 @@ node_modules
 test-ledger
 .yarn
 .surfpool
+
+# TS clients
+clients/ts/**/dist
+clients/ts/**/node_modules
+*.tsbuildinfo
