@@ -188,6 +188,8 @@ async function resetDeal() {
 }
 
 refresh();
+// Live-update so the page can be driven externally (demo recordings).
+setInterval(() => { if (!busy) refresh(); }, 2000);
 </script>
 </body>
 </html>

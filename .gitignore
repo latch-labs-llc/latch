@@ -11,3 +11,6 @@ test-ledger
 clients/ts/**/dist
 clients/ts/**/node_modules
 *.tsbuildinfo
+app/node_modules
+app/dist
+app/e2e/shots
