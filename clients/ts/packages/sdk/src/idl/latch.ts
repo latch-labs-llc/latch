@@ -1547,6 +1547,17 @@ export type Latch = {
             "type": "u64"
           },
           {
+            "name": "tieBreakerAmount",
+            "docs": [
+              "The tie-breaker's ruled payout (meaningful only while",
+              "`tie_breaker_decided`). Stored apart from `proposed_to_payee` so a",
+              "party counter-proposal can never overwrite or erase the ruling.",
+              "Carved from the front of `_reserved` (zero in pre-existing accounts),",
+              "so the account layout and size are unchanged."
+            ],
+            "type": "u64"
+          },
+          {
             "name": "reserved",
             "docs": [
               "Reserved for future use (ZK phase: per-party ElGamal keys, etc.)."
@@ -1554,7 +1565,7 @@ export type Latch = {
             "type": {
               "array": [
                 "u8",
-                64
+                56
               ]
             }
           }

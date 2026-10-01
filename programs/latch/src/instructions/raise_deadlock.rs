@@ -63,11 +63,13 @@ pub fn handle_withdraw_deadlock(ctx: Context<WithdrawDeadlock>) -> Result<()> {
     deal.deadlock_raised_at = 0;
     deal.deadlock_raised_by = Pubkey::default();
     deal.last_resumed_at = now;
-    // A withdrawn dispute discards any in-flight settlement proposal.
+    // A withdrawn dispute discards any in-flight settlement proposal and any
+    // tie-breaker ruling.
     deal.proposal_active = false;
     deal.proposed_to_payee = 0;
     deal.resolution_approvals = 0;
     deal.tie_breaker_decided = false;
+    deal.tie_breaker_amount = 0;
 
     let seq = deal.next_seq();
     emit_cpi!(DeadlockWithdrawn {

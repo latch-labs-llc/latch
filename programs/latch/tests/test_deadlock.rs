@@ -99,6 +99,59 @@ fn tie_breaker_decides() {
 }
 
 #[test]
+fn party_proposal_cannot_erase_tie_breaker_ruling() {
+    let arbiter = Keypair::new();
+    let arbiter_pub = arbiter.pubkey();
+    let mut f = deadlocked_fixture(move |p| {
+        p.deadlock_rule = DeadlockRule::TieBreaker;
+        p.tie_breaker = arbiter_pub;
+    });
+    f.svm.airdrop(&arbiter.pubkey(), SOL).unwrap();
+
+    // The tie-breaker rules: 40% to payee.
+    let ix = ix_resolution_sign(&arbiter.pubkey(), &f.deal, 400);
+    send(&mut f.svm, &[ix], &arbiter.pubkey(), &[&arbiter]).unwrap();
+
+    // The losing party counter-proposes before anyone cranks. This must
+    // neither erase nor overwrite the ruling.
+    let ix = ix_resolution_sign(&f.bob.pubkey(), &f.deal, 1000);
+    send(&mut f.svm, &[ix], &f.bob.pubkey(), &[&f.bob]).unwrap();
+
+    // The crank still executes the tie-breaker's ruling.
+    let rix = resolve_ix(&f);
+    let alice_before = token_balance(&f.svm, &f.alice_ata);
+    send(&mut f.svm, &[rix], &f.alice.pubkey(), &[&f.alice]).unwrap();
+    assert_eq!(token_balance(&f.svm, &f.bob_ata), 400);
+    assert_eq!(token_balance(&f.svm, &f.alice_ata), alice_before + 600);
+}
+
+#[test]
+fn unanimous_mutual_agreement_outranks_tie_breaker_ruling() {
+    let arbiter = Keypair::new();
+    let arbiter_pub = arbiter.pubkey();
+    let mut f = deadlocked_fixture(move |p| {
+        p.deadlock_rule = DeadlockRule::TieBreaker;
+        p.tie_breaker = arbiter_pub;
+    });
+    f.svm.airdrop(&arbiter.pubkey(), SOL).unwrap();
+
+    // Ruling: 40% to payee. Then BOTH parties agree on 50/50 instead —
+    // party autonomy: unanimity beats the arbiter.
+    let ix = ix_resolution_sign(&arbiter.pubkey(), &f.deal, 400);
+    send(&mut f.svm, &[ix], &arbiter.pubkey(), &[&arbiter]).unwrap();
+    for kp in [f.alice.insecure_clone(), f.bob.insecure_clone()] {
+        let ix = ix_resolution_sign(&kp.pubkey(), &f.deal, 500);
+        send(&mut f.svm, &[ix], &kp.pubkey(), &[&kp]).unwrap();
+    }
+
+    let rix = resolve_ix(&f);
+    let alice_before = token_balance(&f.svm, &f.alice_ata);
+    send(&mut f.svm, &[rix], &f.alice.pubkey(), &[&f.alice]).unwrap();
+    assert_eq!(token_balance(&f.svm, &f.bob_ata), 500);
+    assert_eq!(token_balance(&f.svm, &f.alice_ata), alice_before + 500);
+}
+
+#[test]
 fn long_sunset_refunds_after_long_wait_but_mutual_resolves_earlier() {
     let year: i64 = 365 * 24 * 3600;
     let mut f = deadlocked_fixture(move |p| {

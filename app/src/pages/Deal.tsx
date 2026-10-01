@@ -315,6 +315,12 @@ export default function Deal({ address, subject }: { address: string; subject: s
               buyer. Signed by {((a.resolutionApprovals as number).toString(2).split("1").length - 1)} of {a.numParties}.
             </p>
           )}
+          {Boolean(a.tieBreakerDecided) && (
+            <p>
+              ⚖️ The pre-agreed arbiter has issued a ruling. Anyone can execute it — unless all parties jointly
+              settle on different terms first.
+            </p>
+          )}
           {isParty && (
             <div className="row">
               <input

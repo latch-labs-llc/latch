@@ -26,10 +26,12 @@ pub fn handle_resolution_sign(ctx: Context<ResolutionSign>, amount_to_payee: u64
     let is_tie_breaker =
         deal.deadlock_rule == DeadlockRule::TieBreaker && signer == deal.tie_breaker;
     if is_tie_breaker {
-        deal.proposal_active = true;
-        deal.proposed_to_payee = amount_to_payee;
-        deal.resolution_approvals = 0;
+        // The ruling lives in its own fields: party proposals can neither
+        // overwrite nor erase it. Only the tie-breaker can change a ruling,
+        // and only unanimous mutual agreement outranks it (checked first in
+        // `resolve`).
         deal.tie_breaker_decided = true;
+        deal.tie_breaker_amount = amount_to_payee;
     } else {
         let idx = deal.require_party(&signer)?;
         let bit = 1u8 << idx;
@@ -37,7 +39,6 @@ pub fn handle_resolution_sign(ctx: Context<ResolutionSign>, amount_to_payee: u64
             deal.proposal_active = true;
             deal.proposed_to_payee = amount_to_payee;
             deal.resolution_approvals = bit;
-            deal.tie_breaker_decided = false;
         } else {
             deal.resolution_approvals |= bit;
         }
@@ -129,10 +130,10 @@ pub fn handle_resolve(ctx: Context<Resolve>) -> Result<()> {
                 (ResolutionPath::Mutual, deal.proposed_to_payee)
             } else if tie_broken {
                 require!(
-                    deal.proposed_to_payee <= remaining,
+                    deal.tie_breaker_amount <= remaining,
                     EscrowError::PayoutExceedsVault
                 );
-                (ResolutionPath::TieBreaker, deal.proposed_to_payee)
+                (ResolutionPath::TieBreaker, deal.tie_breaker_amount)
             } else {
                 let payee_amount = timeout_payout(deal, remaining)?;
                 // FromActivation: a raised dispute pauses the clock — no

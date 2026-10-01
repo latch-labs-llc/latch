@@ -155,8 +155,15 @@ pub struct Deal {
     /// Monotonic event sequence, one per emitted event.
     pub event_seq: u64,
 
+    /// The tie-breaker's ruled payout (meaningful only while
+    /// `tie_breaker_decided`). Stored apart from `proposed_to_payee` so a
+    /// party counter-proposal can never overwrite or erase the ruling.
+    /// Carved from the front of `_reserved` (zero in pre-existing accounts),
+    /// so the account layout and size are unchanged.
+    pub tie_breaker_amount: u64,
+
     /// Reserved for future use (ZK phase: per-party ElGamal keys, etc.).
-    pub _reserved: [u8; 64],
+    pub _reserved: [u8; 56],
 }
 
 impl Deal {
