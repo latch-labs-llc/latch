@@ -14,3 +14,4 @@ clients/ts/**/node_modules
 app/node_modules
 app/dist
 app/e2e/shots
+app/e2e/shots-dispute
