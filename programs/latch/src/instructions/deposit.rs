@@ -66,6 +66,10 @@ pub fn handle_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
     if fully_funded {
         deal.state = DealState::Funded;
         deal.funded_at = now;
+        // Cancellation consent given before funding does not carry over: a
+        // stale pre-deposit signature must not let the counterparty complete
+        // a mutual cancel of the now-funded deal unilaterally.
+        deal.cancel_approvals = 0;
     }
 
     let seq = deal.next_seq();

@@ -72,6 +72,52 @@ fn mutual_cancel_refunds_payer() {
 }
 
 #[test]
+fn stale_cancel_signature_does_not_survive_funding() {
+    let mut f = Fixture::new(vec![1000], |_| {});
+    f.sign_all();
+
+    // Alice consents to cancel while the deal is still unfunded.
+    let ix = ix_cancel_sign(
+        &f.alice.pubkey(),
+        &f.deal,
+        &f.mint,
+        &f.alice_ata,
+        &f.token_program,
+    );
+    send(&mut f.svm, &[ix], &f.alice.pubkey(), &[&f.alice]).unwrap();
+
+    // Funding invalidates that consent.
+    f.fund();
+
+    // Bob's signature alone must NOT complete the cancel against the
+    // now-funded deal using Alice's stale pre-funding bit.
+    let ix = ix_cancel_sign(
+        &f.bob.pubkey(),
+        &f.deal,
+        &f.mint,
+        &f.alice_ata,
+        &f.token_program,
+    );
+    send(&mut f.svm, &[ix], &f.bob.pubkey(), &[&f.bob]).unwrap();
+    assert_eq!(f.deal_state().state, DealState::Funded);
+    assert_eq!(
+        token_balance(&f.svm, &vault_ata(&f.deal, &f.mint, &f.token_program)),
+        1000
+    );
+
+    // A fresh post-funding signature from Alice completes the mutual cancel.
+    let ix = ix_cancel_sign(
+        &f.alice.pubkey(),
+        &f.deal,
+        &f.mint,
+        &f.alice_ata,
+        &f.token_program,
+    );
+    send(&mut f.svm, &[ix], &f.alice.pubkey(), &[&f.alice]).unwrap();
+    assert_eq!(f.deal_state().state, DealState::Cancelled);
+}
+
+#[test]
 fn mutual_cancel_not_available_once_active() {
     let mut f = Fixture::new(vec![1000], |_| {});
     f.to_active();

@@ -105,7 +105,10 @@ pub fn handle_create_deal(ctx: Context<CreateDeal>, params: CreateDealParams) ->
         | DeadlockRule::TimeoutRefund
         | DeadlockRule::AutoSplit
         | DeadlockRule::LongSunset => {
-            require!(params.timeout_secs > 0, EscrowError::InvalidDeadlockParams);
+            require!(
+                params.timeout_secs > 0 && params.timeout_secs <= MAX_TIMEOUT_SECS,
+                EscrowError::InvalidDeadlockParams
+            );
         }
         DeadlockRule::TieBreaker => {
             require!(

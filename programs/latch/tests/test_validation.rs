@@ -45,6 +45,17 @@ fn create_rejects_bad_params() {
         "MilestoneSumMismatch",
     );
     assert_err(try_create(|p| p.timeout_secs = 0), "InvalidDeadlockParams");
+    // A timeout too distant to ever fire would be a true deadlock without
+    // TrueDeadlock's explicit consent; the cap keeps the rule honest.
+    assert_err(
+        try_create(|p| p.timeout_secs = latch::MAX_TIMEOUT_SECS + 1),
+        "InvalidDeadlockParams",
+    );
+    assert_err(
+        try_create(|p| p.timeout_secs = i64::MAX),
+        "InvalidDeadlockParams",
+    );
+    try_create(|p| p.timeout_secs = latch::MAX_TIMEOUT_SECS).unwrap();
     assert_err(
         try_create(|p| {
             p.deadlock_rule = DeadlockRule::TieBreaker;
