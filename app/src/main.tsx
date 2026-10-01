@@ -15,7 +15,8 @@ import App from "./App";
 import "./styles.css";
 import "@solana/wallet-adapter-react-ui/styles.css";
 
-const endpoint = "https://api.devnet.solana.com";
+const endpoint =
+  (import.meta as any).env?.VITE_RPC_URL || "https://api.devnet.solana.com";
 const wallets = [
   new PhantomWalletAdapter({ network: WalletAdapterNetwork.Devnet }),
   new SolflareWalletAdapter({ network: WalletAdapterNetwork.Devnet }),

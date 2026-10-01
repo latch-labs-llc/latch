@@ -182,6 +182,15 @@ export default function Deal({ address, subject }: { address: string; subject: s
           <pre className="agreement">{agreement}</pre>
           {isParty && !bit(a.signed, myIdx) && (
             <>
+              {enumName(a.deadlockRule as object) === "TrueDeadlock" && (
+                <div className="error">
+                  <b>⚠ TRUE-DEADLOCK DEAL — read before signing.</b> This deal has <b>no timeout and no
+                  arbiter</b>. If the parties never agree, the escrowed funds stay locked <b>forever</b>; only
+                  mutual sign-off or the recovery signers ({a.recoveryThreshold}-of-{a.numRecovery}, after the
+                  on-chain notice period) can ever move them. Your signature records your explicit, informed
+                  consent to that rule.
+                </div>
+              )}
               <label className="consent">
                 <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /> I have read
                 the agreement and consent to sign and transact electronically. My wallet signature over the document

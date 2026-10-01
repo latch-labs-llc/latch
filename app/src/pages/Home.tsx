@@ -4,6 +4,7 @@ import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useEffect, useState } from "react";
 import { buildAgreement, sha256 } from "../lib/agreement";
 import { LDD_DECIMALS, LDD_MINT, buildLddFaucetTx, lddAta, tokenUiBalance } from "../lib/ldd";
+import { SOL_TAP_AMOUNT, tapSol } from "../lib/soltap";
 import { short, useLatch } from "../lib/useLatch";
 
 const RULES = ["TimeoutRefund", "TimeoutRelease", "AutoSplit", "TieBreaker", "LongSunset", "TrueDeadlock"] as const;
@@ -56,8 +57,13 @@ export default function Home() {
 
   const airdrop = () =>
     run("airdrop", async () => {
-      const sig = await connection.requestAirdrop(publicKey!, LAMPORTS_PER_SOL);
-      await connection.confirmTransaction(sig, "confirmed");
+      try {
+        await tapSol(connection, publicKey!);
+      } catch {
+        // Tap empty or hiccuped - fall back to the public faucet.
+        const sig = await connection.requestAirdrop(publicKey!, LAMPORTS_PER_SOL);
+        await connection.confirmTransaction(sig, "confirmed");
+      }
     });
 
   const faucet = () =>
@@ -145,9 +151,9 @@ export default function Home() {
           <div>
             <b>{sol === null ? "…" : sol.toFixed(3)}</b> SOL{" "}
             <button disabled={!!busy} onClick={airdrop}>
-              {busy === "airdrop" ? "…" : "Airdrop 1 SOL"}
+              {busy === "airdrop" ? "…" : `Get ${SOL_TAP_AMOUNT} SOL`}
             </button>
-            <span className="muted"> (rate-limited; also see faucet.solana.com)</span>
+            <span className="muted"> (devnet fee money, on us)</span>
           </div>
           <div>
             <b>{ldd.toLocaleString()}</b> LDD{" "}
@@ -211,6 +217,13 @@ export default function Home() {
             Seller share (basis points, 10000 = 100%)
             <input value={splitBps} onChange={(e) => setSplitBps(e.target.value)} type="number" min="0" max="10000" />
           </label>
+        )}
+        {rule === "TrueDeadlock" && (
+          <div className="error">
+            ⚠ True deadlock has <b>no timeout and no arbiter</b>. If you and your counterparty never agree, the
+            funds stay locked forever — only mutual signatures or your recovery signers can ever move them. Every
+            party must explicitly consent to this at signing.
+          </div>
         )}
         {rule === "TieBreaker" && (
           <label>
