@@ -74,6 +74,18 @@ jobs:
             target/deploy/latch.so
             latch.so.sha256
 
+  app:
+    name: Web app typecheck & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build app
+        working-directory: app
+        run: npm ci && npm run build
+
   audit:
     name: cargo audit (advisory)
     runs-on: ubuntu-latest

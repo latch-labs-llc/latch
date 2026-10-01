@@ -1,14 +1,15 @@
 /**
  * Demo merchant storefront + "Latch Checkout" pay sheet.
  *
- * The Apple Pay-style experience over split-control escrow: a buyer pays with
- * a connected Solana wallet, or with a (clearly simulated, devnet-only) card
- * flow in which a guest wallet is created invisibly — the "never touch
- * crypto" path. Real fiat on/off-ramps are a mainnet roadmap item via
- * licensed onramp partners; nothing here pretends otherwise.
+ * The Apple Pay-style experience over split-control escrow. Checkout is a
+ * state-driven, resumable machine (see lib/checkout.ts): progress is persisted
+ * before the first transaction and derived from on-chain state, so an
+ * interrupted checkout resumes exactly where it stopped. Real fiat on/off
+ * ramps are a mainnet roadmap item via licensed partners; the card path here
+ * is clearly labeled as simulated.
  */
-import { AnchorProvider, BN } from "@anchor-lang/core";
-import { DeadlockRule, LATCH_PROGRAM_ID, LatchClient, RiskFlags, TimerMode, dealPda } from "@latch-labs/sdk";
+import { AnchorProvider } from "@anchor-lang/core";
+import { LatchClient } from "@latch-labs/sdk";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   getAssociatedTokenAddressSync,
@@ -16,11 +17,17 @@ import {
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { useEffect, useState } from "react";
-import { buildAgreement, sha256 } from "../lib/agreement";
-import { LDD_DECIMALS, LDD_MINT, buildLddFaucetTx, lddAta, tokenUiBalance } from "../lib/ldd";
+import {
+  PendingOrder,
+  advanceCheckout,
+  buyerClientFor,
+  loadPending,
+  newPending,
+  savePending,
+  withRetry,
+} from "../lib/checkout";
 import { MERCHANT_NAME, MERCHANT_PUBKEY, keypairWallet, merchantClient } from "../lib/merchant";
-import { tapSol } from "../lib/soltap";
-import { short, useLatch } from "../lib/useLatch";
+import { short, useLatch, useLatchOrReadonly } from "../lib/useLatch";
 
 const PRODUCTS = [
   { id: "desk", emoji: "🪵", name: "Vintage mahogany writing desk", price: 120, blurb: "1920s, restored. Ships freight." },
@@ -29,7 +36,6 @@ const PRODUCTS = [
 ] as const;
 type Product = (typeof PRODUCTS)[number];
 
-const PROTECTION_DAYS = 7;
 interface Order {
   deal: string;
   subject: string;
@@ -40,7 +46,13 @@ const saveOrder = (o: Order) => localStorage.setItem("latch-orders", JSON.string
 
 export default function Store() {
   const [checkout, setCheckout] = useState<Product | null>(null);
+  const [resume, setResume] = useState<PendingOrder | null>(loadPending());
   const [orders, setOrders] = useState<Order[]>(loadOrders());
+
+  const ordered = () => {
+    setOrders(loadOrders());
+    setResume(loadPending());
+  };
 
   return (
     <div className="store">
@@ -52,6 +64,31 @@ export default function Store() {
           <code>{short(MERCHANT_PUBKEY.toBase58(), 4)}</code>
         </p>
       </div>
+
+      {resume && !checkout && (
+        <div className="card promo">
+          <div className="row spread">
+            <div>
+              <b>Unfinished checkout:</b> {resume.name} (${resume.price}.00)
+              <div className="muted">Interrupted mid-payment — it can continue exactly where it stopped.</div>
+            </div>
+            <div>
+              <button className="primary" onClick={() => setCheckout(PRODUCTS.find((p) => p.id === resume.productId) ?? PRODUCTS[0])}>
+                Resume
+              </button>{" "}
+              <button
+                onClick={() => {
+                  savePending(null);
+                  setResume(null);
+                }}
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="products">
         {PRODUCTS.map((p) => (
           <div className="product" key={p.id}>
@@ -67,12 +104,16 @@ export default function Store() {
           </div>
         ))}
       </div>
-      {orders.length > 0 && <Orders orders={orders} refresh={() => setOrders(loadOrders())} />}
+      {orders.length > 0 && <Orders orders={orders} />}
       {checkout && (
         <CheckoutSheet
           product={checkout}
-          onClose={() => setCheckout(null)}
-          onOrdered={() => setOrders(loadOrders())}
+          pending={resume && resume.productId === checkout.id ? resume : null}
+          onClose={() => {
+            setCheckout(null);
+            setResume(loadPending());
+          }}
+          onOrdered={ordered}
         />
       )}
       <p className="center muted">
@@ -86,118 +127,64 @@ export default function Store() {
 
 // ------------------------------------------------------------------ sheet
 
-function CheckoutSheet({ product, onClose, onOrdered }: { product: Product; onClose: () => void; onOrdered: () => void }) {
+function CheckoutSheet({
+  product,
+  pending: resumable,
+  onClose,
+  onOrdered,
+}: {
+  product: Product;
+  pending: PendingOrder | null;
+  onClose: () => void;
+  onOrdered: () => void;
+}) {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
   const connected = useLatch();
   const [mode, setMode] = useState<"options" | "card" | "processing" | "done">("options");
-  const [agree, setAgree] = useState(false);
+  const [agree, setAgree] = useState(!!resumable);
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [dealAddr, setDealAddr] = useState("");
-  const subject = `Purchase of: ${product.name} — from ${MERCHANT_NAME}`;
+  const [canResume, setCanResume] = useState(!!resumable);
 
   const push = (m: string) => setLog((l) => [...l, m]);
 
-  async function runCheckout(buyerClient: LatchClient, buyerKp?: Keypair) {
+  async function drive(pending: PendingOrder, client: LatchClient, kp?: Keypair) {
     setMode("processing");
     setError("");
     try {
-      const buyer = buyerClient.program.provider.publicKey!;
-      const raw = BigInt(product.price) * BigInt(10 ** LDD_DECIMALS);
-
-      push("Preparing buyer balances…");
-      const sol = await connection.getBalance(buyer);
-      if (sol < 0.02 * 1e9) {
-        await tapSol(connection, buyer);
-        push("  · devnet fee money added");
-      }
-      const ata = lddAta(buyer);
-      const bal = await tokenUiBalance(connection, ata);
-      if (bal < product.price) {
-        const { tx, authority } = buildLddFaucetTx(buyer, product.price);
-        if (buyerKp) {
-          tx.feePayer = buyer;
-          tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-          tx.sign(buyerKp, authority);
-          const sig = await connection.sendRawTransaction(tx.serialize());
-          await connection.confirmTransaction(sig, "confirmed");
-        } else {
-          const provider = buyerClient.program.provider as AnchorProvider;
-          await provider.sendAndConfirm!(tx, [authority]);
-        }
-        push(buyerKp ? "  · simulated card charged → test dollars delivered" : "  · demo balance topped up");
-      }
-
-      push("Creating the escrow deal…");
-      const dealId = Math.floor(Date.now() / 1000);
-      const deal = dealPda(buyer, dealId, LATCH_PROGRAM_ID);
-      const text = buildAgreement({
-        deal,
-        dealId: String(dealId),
-        buyer,
-        seller: MERCHANT_PUBKEY,
-        mint: LDD_MINT,
-        decimals: LDD_DECIMALS,
-        milestoneAmounts: [raw],
-        ruleName: "TimeoutRelease",
-        timerModeName: "FromActivation",
-        timeoutSecs: String(PROTECTION_DAYS * 86400),
-        recoverySigners: [buyer, MERCHANT_PUBKEY],
-        recoveryThreshold: 2,
-        recoveryDelaySecs: "259200",
-        subject,
-      });
-      const termsHash = await sha256(text);
-      await buyerClient
-        .createDeal({
-          dealId,
-          parties: [buyer, MERCHANT_PUBKEY],
-          payerIdx: 0,
-          payeeIdx: 1,
-          approvalThreshold: 2,
-          termsHash,
-          milestoneAmounts: [new BN(raw.toString())],
-          deadlockRule: DeadlockRule.TimeoutRelease,
-          timerMode: TimerMode.FromActivation,
-          timeoutSecs: new BN(PROTECTION_DAYS * 86400),
-          recoverySigners: [buyer, MERCHANT_PUBKEY],
-          recoveryThreshold: 2,
-          recoveryDelaySecs: new BN(259200),
-          acceptedRiskFlags: RiskFlags.ALL,
-          mint: LDD_MINT,
-        })
-        .rpc();
-
-      push("Signing the agreement (your signature)…");
-      await buyerClient.signTerms(deal, true).rpc();
-
-      push("Merchant countersigning (server-side SDK call)…");
-      await merchantClient(connection).signTerms(deal, true).rpc();
-
-      push(`Placing $${product.price}.00 into escrow…`);
-      await (await buyerClient.deposit(deal, new BN(raw.toString()), ata)).rpc();
-
-      push("Activating the deal (both sides ready)…");
-      await buyerClient.confirmReady(deal).rpc();
-      await merchantClient(connection).confirmReady(deal).rpc();
-
-      saveOrder({ deal: deal.toBase58(), subject, guestSecret: buyerKp ? Array.from(buyerKp.secretKey) : undefined });
-      setDealAddr(deal.toBase58());
+      savePending(pending);
+      await advanceCheckout(connection, pending, client, kp, push);
+      saveOrder({ deal: pending.deal, subject: pending.subject, guestSecret: pending.guestSecret });
+      savePending(null);
+      setDealAddr(pending.deal);
       setMode("done");
       onOrdered();
     } catch (e: any) {
       setError(e?.error?.errorMessage ?? e?.message ?? String(e));
+      setCanResume(true);
       setMode("options");
     }
   }
 
+  const resumeNow = () => {
+    const pending = loadPending();
+    if (!pending) return;
+    try {
+      const { client, kp } = buyerClientFor(connection, pending, connected);
+      drive(pending, client, kp);
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
   const payWithWallet = () => {
-    if (!connected) {
+    if (!connected || !publicKey) {
       setError("Connect a wallet first (top right) — or use the card option for guest checkout.");
       return;
     }
-    runCheckout(connected);
+    drive(newPending(product, publicKey), connected);
   };
 
   const payWithCard = () => {
@@ -206,8 +193,12 @@ function CheckoutSheet({ product, onClose, onOrdered }: { product: Product; onCl
     // charge to stablecoins; on devnet we simulate it with test dollars.
     const kp = Keypair.generate();
     const provider = new AnchorProvider(connection, keypairWallet(kp) as any, { commitment: "confirmed" });
-    runCheckout(LatchClient.fromProvider(provider), kp);
+    drive(newPending(product, kp.publicKey, kp), LatchClient.fromProvider(provider), kp);
   };
+
+  const subjectFor = dealAddr
+    ? loadOrders().find((o) => o.deal === dealAddr)?.subject ?? ""
+    : "";
 
   return (
     <div className="sheet-backdrop" onClick={mode === "processing" ? undefined : onClose}>
@@ -228,15 +219,19 @@ function CheckoutSheet({ product, onClose, onOrdered }: { product: Product; onCl
             </div>
             <div className="protection">
               🛡 <b>Latch Buyer–Seller Protection.</b> Your payment is held in escrow that neither you nor the
-              merchant can take alone. It releases when you confirm delivery — or automatically after{" "}
-              {PROTECTION_DAYS} days unless you open a dispute (a dispute pauses the clock). Every signature is
-              recorded on-chain.
+              merchant can take alone. It releases when you confirm delivery — or automatically after 7 days unless
+              you open a dispute (a dispute pauses the clock). Every signature is recorded on-chain.
             </div>
           </>
         )}
 
         {mode === "options" && (
           <>
+            {canResume && loadPending() && (
+              <button className="primary wide" onClick={resumeNow}>
+                ▶ Resume interrupted checkout
+              </button>
+            )}
             <label className="consent">
               <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /> I agree to the
               escrow agreement for this purchase and consent to sign electronically. (The full agreement is hashed
@@ -267,7 +262,10 @@ function CheckoutSheet({ product, onClose, onOrdered }: { product: Product; onCl
             <button className="primary wide" onClick={payWithCard}>
               Pay ${product.price}.00
             </button>
-            <p className="muted center">Guest checkout — a wallet is created for you invisibly. No extension needed.</p>
+            <p className="muted center">
+              Guest checkout — a wallet is created for you invisibly and kept in this browser's storage. Clearing
+              site data loses access to it (demo tokens only). No extension needed.
+            </p>
           </>
         )}
 
@@ -276,7 +274,7 @@ function CheckoutSheet({ product, onClose, onOrdered }: { product: Product; onCl
             {log.map((l, i) => (
               <div key={i}>{l}</div>
             ))}
-            <div className="spinline">⏳ working on devnet…</div>
+            <div className="spinline">⏳ working on devnet… (interruptions are safe — checkout resumes)</div>
           </div>
         )}
 
@@ -288,8 +286,8 @@ function CheckoutSheet({ product, onClose, onOrdered }: { product: Product; onCl
               The merchant has countersigned; the deal is active on Solana devnet.
             </p>
             <p>
-              <a className="btnlike" href={`#/deal/${dealAddr}?s=${encodeURIComponent(subject)}`}>View deal</a>{" "}
-              <a className="btnlike gold" href={`#/cert/${dealAddr}?s=${encodeURIComponent(subject)}`}>Certificate</a>
+              <a className="btnlike" href={`#/deal/${dealAddr}?s=${encodeURIComponent(subjectFor)}`}>View deal</a>{" "}
+              <a className="btnlike gold" href={`#/cert/${dealAddr}?s=${encodeURIComponent(subjectFor)}`}>Certificate</a>
             </p>
             <button className="wide" onClick={onClose}>Back to the store</button>
           </div>
@@ -301,19 +299,19 @@ function CheckoutSheet({ product, onClose, onOrdered }: { product: Product; onCl
 
 // ------------------------------------------------------------------ orders
 
-function Orders({ orders, refresh }: { orders: Order[]; refresh: () => void }) {
+function Orders({ orders }: { orders: Order[] }) {
   const { connection } = useConnection();
   const connected = useLatch();
+  const viewer = useLatchOrReadonly();
   const [states, setStates] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   const load = async () => {
-    const anyClient = connected ?? merchantClient(connection);
     const out: Record<string, string> = {};
     for (const o of orders) {
       try {
-        out[o.deal] = (await anyClient.fetchDeal(new PublicKey(o.deal))).state;
+        out[o.deal] = (await viewer.fetchDeal(new PublicKey(o.deal))).state;
       } catch {
         out[o.deal] = "?";
       }
@@ -322,7 +320,7 @@ function Orders({ orders, refresh }: { orders: Order[]; refresh: () => void }) {
   };
   useEffect(() => {
     load();
-  }, [orders.length, connected]);
+  }, [orders.length, viewer]);
 
   const confirmDelivery = async (o: Order) => {
     setBusy(o.deal);
@@ -339,16 +337,22 @@ function Orders({ orders, refresh }: { orders: Order[]; refresh: () => void }) {
           )
         : connected;
       if (!buyerClient) throw new Error("connect the wallet you bought with");
-      await buyerClient.approveMilestone(deal, 0).rpc();
       const m = merchantClient(connection);
-      await m.approveMilestone(deal, 0).rpc();
-      const d = await m.fetchDeal(deal);
+      const d = await withRetry("deal lookup", () => m.fetchDeal(deal));
+      if (!(d.account.milestones[0].approvals & 1)) {
+        await withRetry("buyer approval", () => buyerClient.approveMilestone(deal, 0).rpc());
+      }
+      if (!(d.account.milestones[0].approvals & 2)) {
+        await withRetry("merchant approval", () => m.approveMilestone(deal, 0).rpc());
+      }
       const merchantAta = getAssociatedTokenAddressSync(d.account.mint, MERCHANT_PUBKEY, true, d.account.tokenProgram);
-      await (await m.releaseMilestone(deal, 0, merchantAta))
-        .preInstructions([
-          createAssociatedTokenAccountIdempotentInstruction(MERCHANT_PUBKEY, merchantAta, MERCHANT_PUBKEY, d.account.mint, d.account.tokenProgram),
-        ])
-        .rpc();
+      await withRetry("release", async () =>
+        (await m.releaseMilestone(deal, 0, merchantAta))
+          .preInstructions([
+            createAssociatedTokenAccountIdempotentInstruction(MERCHANT_PUBKEY, merchantAta, MERCHANT_PUBKEY, d.account.mint, d.account.tokenProgram),
+          ])
+          .rpc()
+      );
       await load();
     } catch (e: any) {
       setError(e?.error?.errorMessage ?? e?.message ?? String(e));
@@ -360,6 +364,9 @@ function Orders({ orders, refresh }: { orders: Order[]; refresh: () => void }) {
   return (
     <div className="card">
       <h3>Your orders</h3>
+      <p className="muted">
+        Orders (and guest wallets) live in this browser's storage — clearing site data loses them. Demo tokens only.
+      </p>
       {orders.map((o) => (
         <div className="milestone" key={o.deal}>
           <div>

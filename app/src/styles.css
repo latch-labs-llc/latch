@@ -77,3 +77,14 @@ button.ghost { border: none; background: none; font-size: 1.1em; }
 .processing div { padding: 3px 0; font-size: .9em; }
 .spinline { color: var(--sub); }
 .promo { background: linear-gradient(135deg, #fdfaf3, #f4ead5); border-color: #e8dcc3; }
+
+/* small screens */
+@media (max-width: 560px) {
+  header { flex-wrap: wrap; gap: 8px; }
+  .row.spread { flex-direction: column; align-items: stretch; }
+  .row.spread > div { width: 100%; }
+  .balances { flex-direction: column; gap: 8px; }
+  .milestone { flex-wrap: wrap; }
+  .cert { padding: 16px 12px; }
+  .sheet { width: 96vw; padding: 14px; }
+}
