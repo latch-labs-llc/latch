@@ -55,3 +55,25 @@ code { font-family: ui-monospace, Menlo, monospace; font-size: .92em; }
 .cert th { background: #f2efe9; }
 .cert .meta td { border: none; padding: 3px 8px; }
 @media print { header, footer, .warnbar, .noprint { display: none !important; } body { background: #fff; } .cert { border: none; } }
+
+/* storefront */
+.store-hero { text-align: center; padding: 18px 0 6px; }
+.store-hero h1 { font-family: Georgia, serif; margin-bottom: 4px; }
+.products { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin: 18px 0; }
+.product { background: #fffdf8; border: 1px solid #e8dcc3; border-radius: 12px; padding: 16px; }
+.product .pimg { font-size: 56px; text-align: center; background: linear-gradient(135deg, #f7f1e3, #efe2c6); border-radius: 10px; padding: 24px 0; }
+.product h3 { margin: 10px 0 4px; font-family: Georgia, serif; }
+button.latchpay { background: #17202a; border-color: #17202a; color: #fff; }
+button.latchpay:hover { background: #2c3e50; }
+button.wide { width: 100%; margin-top: 8px; }
+button.ghost { border: none; background: none; font-size: 1.1em; }
+.sheet-backdrop { position: fixed; inset: 0; background: rgba(23,32,42,.45); display: flex; align-items: center; justify-content: center; z-index: 50; }
+.sheet { background: #fff; border-radius: 14px; padding: 20px 22px; width: min(440px, 92vw); max-height: 90vh; overflow: auto; box-shadow: 0 18px 60px rgba(0,0,0,.25); }
+.sheet-item { display: flex; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 12px 0; }
+.sheet-item .pemoji { font-size: 34px; }
+.sheet-item .price { margin-left: auto; font-weight: 700; }
+.protection { background: #eafaf1; border: 1px solid #c8e6d5; border-radius: 10px; padding: 10px 12px; font-size: .85em; margin-bottom: 12px; }
+.simbanner { background: #fef9e7; border: 1px solid #f1e0a6; border-radius: 10px; padding: 9px 12px; font-size: .8em; margin-bottom: 10px; }
+.processing div { padding: 3px 0; font-size: .9em; }
+.spinline { color: var(--sub); }
+.promo { background: linear-gradient(135deg, #fdfaf3, #f4ead5); border-color: #e8dcc3; }

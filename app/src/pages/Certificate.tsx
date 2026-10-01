@@ -4,7 +4,7 @@ import { PublicKey } from "@solana/web3.js";
 import { useEffect, useMemo, useState } from "react";
 import { buildAgreement, hex, sha256 } from "../lib/agreement";
 import { LDD_DECIMALS, LDD_MINT } from "../lib/ldd";
-import { useLatch } from "../lib/useLatch";
+import { useLatchOrReadonly } from "../lib/useLatch";
 
 function ts(t: number | null): string {
   return t ? new Date(t * 1000).toUTCString() : "—";
@@ -12,7 +12,7 @@ function ts(t: number | null): string {
 
 export default function Certificate({ address, subject }: { address: string; subject: string }) {
   const { connection } = useConnection();
-  const latch = useLatch();
+  const latch = useLatchOrReadonly();
   const deal = useMemo(() => new PublicKey(address), [address]);
   const [info, setInfo] = useState<DealInfo | null>(null);
   const [events, setEvents] = useState<any[]>([]);
@@ -51,7 +51,6 @@ export default function Certificate({ address, subject }: { address: string; sub
     })();
   }, [latch, address]);
 
-  if (!latch) return <div className="card center">Connect any wallet (Burner works) to load the certificate.</div>;
   if (loading || !info) return <div className="card center">Reconstructing certificate from on-chain events…</div>;
 
   const a = info.account;

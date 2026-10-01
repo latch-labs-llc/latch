@@ -15,3 +15,4 @@ app/node_modules
 app/dist
 app/e2e/shots
 app/e2e/shots-dispute
+app/e2e/shots-checkout

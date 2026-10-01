@@ -8,7 +8,7 @@ import { PublicKey } from "@solana/web3.js";
 import { useEffect, useMemo, useState } from "react";
 import { buildAgreement, hex, sha256 } from "../lib/agreement";
 import { LDD_DECIMALS, LDD_MINT } from "../lib/ldd";
-import { short, useLatch } from "../lib/useLatch";
+import { short, useLatchOrReadonly } from "../lib/useLatch";
 
 function ui(raw: BN | bigint | string, decimals: number): string {
   const s = BigInt(raw.toString()).toString().padStart(decimals + 1, "0");
@@ -24,7 +24,7 @@ function bit(mask: number, i: number): boolean {
 export default function Deal({ address, subject }: { address: string; subject: string }) {
   const { connection } = useConnection();
   const { publicKey } = useWallet();
-  const latch = useLatch();
+  const latch = useLatchOrReadonly();
   const deal = useMemo(() => new PublicKey(address), [address]);
 
   const [info, setInfo] = useState<DealInfo | null>(null);
@@ -94,11 +94,10 @@ export default function Deal({ address, subject }: { address: string; subject: s
   }, [info?.account.termsHash?.toString(), subject, decimals]);
 
   if (notFound) return <div className="card">Deal not found on devnet: <code>{address}</code></div>;
-  if (!publicKey) return <div className="card center">Connect a wallet (or a Burner) to view this deal.</div>;
   if (!info || !latch) return <div className="card center">Loading deal…</div>;
 
   const a = info.account;
-  const me = publicKey;
+  const me = publicKey ?? PublicKey.default; // read-only viewer when no wallet
   const myIdx = a.parties.slice(0, a.numParties).findIndex((p: PublicKey) => p.equals(me));
   const isParty = myIdx >= 0;
   const isPayer = myIdx === a.payerIdx;
@@ -396,7 +395,10 @@ export default function Deal({ address, subject }: { address: string; subject: s
       )}
 
       {error && <div className="card error">{error}</div>}
-      {!isParty && recIdx < 0 && state !== "Completed" && state !== "Cancelled" && (
+      {!publicKey && (
+        <p className="muted center">Viewing read-only — connect a wallet (top right) to act on this deal.</p>
+      )}
+      {publicKey && !isParty && recIdx < 0 && state !== "Completed" && state !== "Cancelled" && (
         <p className="muted center">
           You are viewing as <code>{short(me.toBase58(), 6)}</code> — not a party to this deal. Release and resolve
           buttons still work for anyone once conditions are met (that's the point).

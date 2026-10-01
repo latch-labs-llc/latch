@@ -145,6 +145,18 @@ export default function Home() {
 
   return (
     <>
+      <div className="card promo">
+        <div className="row spread">
+          <div>
+            <h3 style={{ margin: 0 }}>New: Latch Checkout</h3>
+            <p className="muted" style={{ margin: "4px 0 0" }}>
+              The Apple Pay experience, escrow underneath. Try the demo storefront — card path needs no wallet at all.
+            </p>
+          </div>
+          <a className="btnlike gold" href="#/store">Visit the store →</a>
+        </div>
+      </div>
+
       <div className="card">
         <h3>Your devnet balances</h3>
         <div className="row balances">
