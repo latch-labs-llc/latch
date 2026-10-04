@@ -180,6 +180,50 @@ export default function Landing() {
         </div>
       </section>
 
+      <section className="lp-section">
+        <div className="lp-wrap">
+          <div className="lp-eyebrow">Roadmap</div>
+          <h2>Built in the open, in this order.</h2>
+          <div className="lp-road">
+            <div>
+              <span className="lp-chip lp-chip-done">Shipped</span>
+              <h3>The primitive, proven</h3>
+              <p>Verified reproducible program on devnet, 45 tests, three npm packages, two storefronts on the published checkout package, evidence packets on every deal.</p>
+            </div>
+            <div>
+              <span className="lp-chip lp-chip-next">Next</span>
+              <h3>Independent audit → mainnet</h3>
+              <p>External security review, then mainnet with the upgrade key in a Squads multisig behind a timelock. Real money only after real review.</p>
+            </div>
+            <div>
+              <span className="lp-chip lp-chip-next">Next</span>
+              <h3>Protection is the dial</h3>
+              <p>A consumer payments app on the same rails: instant with friends, held-until-delivery with strangers, full milestones and arbiters when you need them.</p>
+            </div>
+            <div>
+              <span className="lp-chip lp-chip-next">Next</span>
+              <h3>Hosted session API</h3>
+              <p>The checkout interface served over HTTP with webhooks — and licensed onramp partners on the fiat edges, so no operator ever sits in the flow of funds.</p>
+            </div>
+            <div>
+              <span className="lp-chip lp-chip-exp">Exploring</span>
+              <h3>Documentary settlement</h3>
+              <p>Releases triggered by delivery and inspection attestations — parcel tracking, documents against payment — with the arbiter role as examiner. The shape trade workflows need.</p>
+            </div>
+            <div>
+              <span className="lp-chip lp-chip-exp">Exploring</span>
+              <h3>Confidential amounts</h3>
+              <p>Token-2022 confidential transfers for deal amounts; the account layout already reserves the space.</p>
+            </div>
+          </div>
+          <p className="lp-dim lp-road-note">
+            Every stage ships open source under Apache-2.0 — the roadmap doubles as a contribution map for Solana
+            developers and a reference for integrating Latch into your own product.{" "}
+            <a href="https://github.com/latch-labs-llc/latch/blob/main/ROADMAP.md" target="_blank" rel="noreferrer">Full roadmap →</a>
+          </p>
+        </div>
+      </section>
+
       <section className="lp-band">
         <div className="lp-wrap">
           <Lock size={34} color="#8fb0ff" />
