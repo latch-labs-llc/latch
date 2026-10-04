@@ -317,8 +317,8 @@ export default function Deal({ address, subject }: { address: string; subject: s
           )}
           {Boolean(a.tieBreakerDecided) && (
             <p>
-              ⚖️ The pre-agreed arbiter has issued a ruling. Anyone can execute it — unless all parties jointly
-              settle on different terms first.
+              ⚖️ The pre-agreed arbiter has ruled: <b>{ui(a.tieBreakerAmount, decimals)}</b> to the seller, remainder
+              to the buyer. Anyone can execute it — unless all parties jointly settle on different terms first.
             </p>
           )}
           {isParty && (
