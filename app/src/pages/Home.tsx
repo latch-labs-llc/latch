@@ -6,7 +6,6 @@ import { buildAgreement, sha256 } from "../lib/agreement";
 import { LDD_DECIMALS, LDD_MINT, buildLddFaucetTx, lddAta, tokenUiBalance } from "../lib/ldd";
 import { SOL_TAP_AMOUNT, tapSol } from "../lib/soltap";
 import { short, useLatch } from "../lib/useLatch";
-import Landing from "./Landing";
 
 const RULES = ["TimeoutRefund", "TimeoutRelease", "AutoSplit", "TieBreaker", "LongSunset", "TrueDeadlock"] as const;
 type RuleName = (typeof RULES)[number];
@@ -130,7 +129,7 @@ export default function Home() {
     });
 
   if (!publicKey) {
-    return <Landing />;
+    return null; // App renders the standalone Landing for disconnected visitors
   }
 
   return (

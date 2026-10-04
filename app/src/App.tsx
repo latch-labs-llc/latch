@@ -1,3 +1,4 @@
+import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useEffect, useState } from "react";
 import Certificate from "./pages/Certificate";
@@ -29,11 +30,18 @@ function parseHash(): Route {
 
 export default function App() {
   const [route, setRoute] = useState<Route>(parseHash());
+  const { publicKey } = useWallet();
   useEffect(() => {
     const onHash = () => setRoute(parseHash());
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+
+  // The marketing landing is a full-bleed standalone page with its own
+  // chrome — shown at #/about and to disconnected visitors on #/.
+  if (route.page === "about" || (route.page === "home" && !publicKey)) {
+    return <Landing />;
+  }
 
   return (
     <div className="shell">
@@ -63,7 +71,6 @@ export default function App() {
         {route.page === "home" && <Home />}
         {route.page === "store" && <Store />}
         {route.page === "orbit" && <Orbit />}
-        {route.page === "about" && <Landing />}
         {route.page === "deal" && <Deal address={route.address!} subject={route.subject} />}
         {route.page === "cert" && <Certificate address={route.address!} subject={route.subject} />}
       </main>
