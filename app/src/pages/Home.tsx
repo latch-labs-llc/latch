@@ -1,5 +1,6 @@
 import { BN, DeadlockRule, RiskFlags, TimerMode, dealPda, LATCH_PROGRAM_ID } from "@latch-labs/sdk";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useEffect, useState } from "react";
 import { buildAgreement, sha256 } from "../lib/agreement";
@@ -133,10 +134,16 @@ export default function Home() {
     // never gets here — App renders the standalone Landing instead.
     return (
       <div className="card center">
-        <h1 style={{ marginBottom: 6 }}>The full deal form</h1>
-        <p className="muted" style={{ maxWidth: 560, margin: "0 auto" }}>
+        <h1 style={{ marginBottom: 6 }}>Connect a wallet to open the full deal form</h1>
+        <p className="muted" style={{ maxWidth: 560, margin: "0 auto 16px" }}>
           Milestones, arbiters, timers, party-chosen recovery signers — every formation parameter, no presets.
-          Connect a wallet above to build one; Burner Wallet works for trying it.
+        </p>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
+          <WalletMultiButton />
+        </div>
+        <p className="muted" style={{ maxWidth: 560, margin: "0 auto" }}>
+          No wallet installed? Pick <b>Burner Wallet</b> — a throwaway devnet wallet that works instantly, no
+          setup. Or start simpler on the <a href="#/send">Send page</a>, where protection is one dial.
         </p>
       </div>
     );
