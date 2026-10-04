@@ -3,11 +3,12 @@ import { useEffect, useState } from "react";
 import Certificate from "./pages/Certificate";
 import Deal from "./pages/Deal";
 import Home from "./pages/Home";
+import Orbit from "./pages/Orbit";
 import Store from "./pages/Store";
 
 /** Tiny hash router: #/ , #/deal/<address>?s=<subject> , #/cert/<address>?s=... */
 export interface Route {
-  page: "home" | "deal" | "cert" | "store";
+  page: "home" | "deal" | "cert" | "store" | "orbit";
   address?: string;
   subject: string;
 }
@@ -20,6 +21,7 @@ function parseHash(): Route {
   if (page === "deal" && address) return { page: "deal", address, subject };
   if (page === "cert" && address) return { page: "cert", address, subject };
   if (page === "store") return { page: "store", subject: "" };
+  if (page === "orbit") return { page: "orbit", subject: "" };
   return { page: "home", subject: "" };
 }
 
@@ -46,6 +48,7 @@ export default function App() {
       <main>
         {route.page === "home" && <Home />}
         {route.page === "store" && <Store />}
+        {route.page === "orbit" && <Orbit />}
         {route.page === "deal" && <Deal address={route.address!} subject={route.subject} />}
         {route.page === "cert" && <Certificate address={route.address!} subject={route.subject} />}
       </main>

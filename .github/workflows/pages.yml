@@ -29,6 +29,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Build TS packages (app consumes @latch-labs/checkout via file:)
+        working-directory: clients/ts
+        run: npm ci && npm run build
       - name: Build
         working-directory: app
         env:
@@ -39,7 +42,7 @@ jobs:
         run: npm ci && npm run build
       - name: Build SDK API docs
         working-directory: clients/ts
-        run: npm ci && npm run docs --workspace @latch-labs/sdk
+        run: npm run docs --workspace @latch-labs/sdk
       - name: Add API docs to site at /api/
         run: mkdir -p app/dist/api && cp -R clients/ts/packages/sdk/docs/. app/dist/api/
       - uses: actions/upload-pages-artifact@v3

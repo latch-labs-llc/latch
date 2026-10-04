@@ -69,11 +69,11 @@ export default function Store() {
         <div className="card promo">
           <div className="row spread">
             <div>
-              <b>Unfinished checkout:</b> {resume.name} (${resume.price}.00)
+              <b>Unfinished checkout:</b> {resume.itemName} (${resume.price}.00)
               <div className="muted">Interrupted mid-payment — it can continue exactly where it stopped.</div>
             </div>
             <div>
-              <button className="primary" onClick={() => setCheckout(PRODUCTS.find((p) => p.id === resume.productId) ?? PRODUCTS[0])}>
+              <button className="primary" onClick={() => setCheckout(PRODUCTS.find((p) => p.id === resume.itemId) ?? PRODUCTS[0])}>
                 Resume
               </button>{" "}
               <button
@@ -108,7 +108,7 @@ export default function Store() {
       {checkout && (
         <CheckoutSheet
           product={checkout}
-          pending={resume && resume.productId === checkout.id ? resume : null}
+          pending={resume && resume.itemId === checkout.id ? resume : null}
           onClose={() => {
             setCheckout(null);
             setResume(loadPending());
@@ -117,9 +117,10 @@ export default function Store() {
         />
       )}
       <p className="center muted">
-        This is the embeddable "Latch Checkout" experience — any merchant adds it with the{" "}
-        <a href="https://www.npmjs.com/package/@latch-labs/sdk" target="_blank" rel="noreferrer">SDK</a>. Funds sit in
-        split-control escrow: the merchant can't take them early, the buyer can't claw them back after delivery.
+        This is the embeddable "Latch Checkout" experience — any merchant adds it with{" "}
+        <code>@latch-labs/checkout</code>. Funds sit in split-control escrow: the merchant can't take them early,
+        the buyer can't claw them back after delivery. See the <a href="#/orbit">other demo merchant</a> running on
+        the same package.
       </p>
     </div>
   );
@@ -184,7 +185,7 @@ function CheckoutSheet({
       setError("Connect a wallet first (top right) — or use the card option for guest checkout.");
       return;
     }
-    drive(newPending(product, publicKey), connected);
+    drive(newPending(connection, product, publicKey), connected);
   };
 
   const payWithCard = () => {
@@ -193,7 +194,7 @@ function CheckoutSheet({
     // charge to stablecoins; on devnet we simulate it with test dollars.
     const kp = Keypair.generate();
     const provider = new AnchorProvider(connection, keypairWallet(kp) as any, { commitment: "confirmed" });
-    drive(newPending(product, kp.publicKey, kp), LatchClient.fromProvider(provider), kp);
+    drive(newPending(connection, product, kp.publicKey, kp), LatchClient.fromProvider(provider), kp);
   };
 
   const subjectFor = dealAddr

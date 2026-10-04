@@ -91,6 +91,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Build TS packages (app consumes @latch-labs/checkout via file:)
+        working-directory: clients/ts
+        run: npm ci && npm run build
       - name: Build app
         working-directory: app
         run: npm ci && npm run build

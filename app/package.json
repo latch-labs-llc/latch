@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@anchor-lang/core": "^1.2.0",
+    "@latch-labs/checkout": "file:../clients/ts/packages/checkout",
     "@latch-labs/sdk": "^0.1.1",
     "@solana/spl-token": "^0.4.15",
     "@solana/wallet-adapter-base": "^0.9.27",
