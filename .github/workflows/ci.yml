@@ -51,6 +51,15 @@ jobs:
         run: cargo build-sbf --arch v0
       - name: Run test suite
         run: cargo test --workspace
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: SDK E2E against local validator
+        # Boots solana-test-validator with the freshly built program at
+        # genesis and drives the full deal lifecycle through the SDK.
+        run: |
+          cd clients/ts && npm ci && npm run build && cd ../..
+          ./scripts/e2e-local.sh
 
   verified-build:
     name: Deterministic build (solana-verify)

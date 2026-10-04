@@ -36,11 +36,12 @@ import {
 } from "../index";
 
 const RPC = process.env.LATCH_RPC ?? "https://api.devnet.solana.com";
+const IS_LOCAL = /127\.0\.0\.1|localhost/.test(RPC);
 
 function loadFunder(): Keypair {
-  const raw = JSON.parse(
-    readFileSync(`${homedir()}/.config/solana/id.json`, "utf8")
-  );
+  const path =
+    process.env.LATCH_FUNDER ?? `${homedir()}/.config/solana/id.json`;
+  const raw = JSON.parse(readFileSync(path, "utf8"));
   return Keypair.fromSecretKey(Uint8Array.from(raw));
 }
 
@@ -59,9 +60,17 @@ async function main() {
   console.log("alice:", alice.publicKey.toBase58());
   console.log("bob:  ", bob.publicKey.toBase58());
 
-  const balance = await connection.getBalance(alice.publicKey);
+  let balance = await connection.getBalance(alice.publicKey);
+  if (balance < 0.2 * LAMPORTS_PER_SOL && IS_LOCAL) {
+    const sig = await connection.requestAirdrop(
+      alice.publicKey,
+      10 * LAMPORTS_PER_SOL
+    );
+    await connection.confirmTransaction(sig, "confirmed");
+    balance = await connection.getBalance(alice.publicKey);
+  }
   if (balance < 0.2 * LAMPORTS_PER_SOL) {
-    throw new Error("need ≥0.2 devnet SOL in ~/.config/solana/id.json");
+    throw new Error("funder needs ≥0.2 SOL (set LATCH_FUNDER or fund id.json)");
   }
 
   // ---- test mint + token accounts (plain SPL, 6 decimals) ----
