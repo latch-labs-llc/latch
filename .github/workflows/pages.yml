@@ -3,7 +3,10 @@ name: Deploy app to GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ["app/**", ".github/workflows/pages.yml"]
+    paths:
+      - "app/**"
+      - "clients/ts/**"
+      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -31,6 +34,11 @@ jobs:
         env:
           LATCH_PAGES: "1"
         run: npm ci && npm run build
+      - name: Build SDK API docs
+        working-directory: clients/ts
+        run: npm ci && npm run docs --workspace @latch-labs/sdk
+      - name: Add API docs to site at /api/
+        run: mkdir -p app/dist/api && cp -R clients/ts/packages/sdk/docs/. app/dist/api/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: app/dist

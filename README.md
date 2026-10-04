@@ -123,7 +123,9 @@ npm install @latch-labs/sdk     # typed client: all 14 instructions, events, PDA
 npm install -g @latch-labs/cli  # full-lifecycle `latch` command
 ```
 
-See `clients/ts/packages/*/README.md` for quickstarts.
+See `clients/ts/packages/*/README.md` for quickstarts, and the
+[SDK API reference](https://latch-labs-llc.github.io/latch/api/) (typedoc,
+rebuilt on every push).
 
 ## Repository
 

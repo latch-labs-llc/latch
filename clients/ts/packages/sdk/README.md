@@ -47,7 +47,8 @@ await client.createDeal({
 
 const deal = client.dealPda(provider.wallet.publicKey, dealId);
 await client.signTerms(deal).rpc();               // each party, own wallet
-// ... deposit, confirmReady, approveMilestone, releaseMilestone — see docs.
+// ... deposit, confirmReady, approveMilestone, releaseMilestone — see the
+// API reference: https://latch-labs-llc.github.io/latch/api/
 
 const info = await client.fetchDeal(deal);        // typed account + state name
 ```

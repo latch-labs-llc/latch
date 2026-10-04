@@ -2,6 +2,16 @@
 
 Devnet prototype, not audited. This lists what we already know needs scrutiny.
 
+An internal adversarial review (2026-10-01) produced three fixes, all with
+regression tests: cancellation approvals now reset on the Signed → Funded
+transition (a stale pre-funding signature could previously complete a mutual
+cancel of the funded deal unilaterally, commit `edd7f2d`); `timeout_secs` is
+capped at 10 years (an effectively-infinite timeout bypassed TrueDeadlock's
+explicit-consent requirement, same commit); and the tie-breaker's ruling is
+stored apart from party proposals so it can no longer be erased by
+counter-proposing (commit `46b7879`). The notes below reflect the
+post-fix behavior.
+
 ## Program-level
 
 1. **Permissionless cranks (`release_milestone`, `resolve`, `recovery_execute`).**
@@ -18,9 +28,12 @@ Devnet prototype, not audited. This lists what we already know needs scrutiny.
    revisit with issuer-freeze playbooks.
 3. **Deadlock stalling incentives.** Timeout rules favor whoever the clock helps;
    they can simply go quiet. Product-layer disclosure, not fixable in-program.
-4. **`resolution_sign` proposal races.** A changed proposal resets approvals — a
-   malicious party can grief by re-proposing forever, but can never move funds
-   without the counterparty (or the timeout). Griefing accepted.
+4. **`resolution_sign` proposal races.** A changed party proposal resets party
+   approvals — a malicious party can grief by re-proposing forever, but can never
+   move funds without the counterparty (or the timeout). Griefing accepted.
+   Under TieBreaker the arbiter's ruling lives in its own fields
+   (`tie_breaker_decided`/`tie_breaker_amount`): party proposals can neither
+   erase nor alter it, and only unanimous mutual agreement outranks it.
 5. **Recovery signers hold real power** (any payer/payee split of remaining funds,
    from any post-funding state, ignoring milestones/deadlock rule). This is the
    court-order hook working as designed; parties must choose signers carefully.
@@ -44,23 +57,34 @@ Devnet prototype, not audited. This lists what we already know needs scrutiny.
     verify no state persists from the failed path.
 12. **Events:** `emit_cpi!` everywhere; `event_seq` monotonic. Indexers must read
     inner instructions, not logs.
+13. **Unsolicited deals (draft spam).** `create_deal` requires only that the
+    creator is a party; the other parties and recovery signers are arbitrary
+    pubkeys who never consented to appear. No funds are at risk and nothing
+    requires a named wallet to act, but any UI listing "deals naming you" is
+    spammable. Integrators should treat unsigned Drafts naming a user as
+    unsolicited invitations and surface them only from known counterparties.
+    Rent (~0.01 SOL per deal) is the natural rate limit.
 
 ## Operational
 
-13. **Upgrade authority** is a single local keypair on devnet. Before anything real:
+14. **Upgrade authority** is a single local keypair on devnet. Before anything real:
     Squads v4 multisig via Safe Authority Transfer, then a timelock policy. The
     program has no admin instructions, but an upgrade can change anything —
     per-contract immutability ultimately depends on upgrade governance
     (verifiable builds + multisig + timelock + eventually immutability).
-14. **No fee logic in-program** — keep it that way; anything commercial
+15. **No fee logic in-program** — keep it that way; anything commercial
     belongs outside the open-source protocol.
-15. **Terms hash** is opaque 32 bytes; the program cannot verify what was hashed.
+16. **Terms hash** is opaque 32 bytes; the program cannot verify what was hashed.
     Any signing ceremony built on top must bind identity ↔ wallet ↔ document;
     that binding is an integrator concern, outside this program.
 
 ## Out of scope for v0.1 (revisit before mainnet)
 
 - Vault close / rent reclamation (withheld transfer fees can block `close_account`).
+- Vault residue: tokens sent directly to the vault (donations, transfer-fee
+  dust) are swept with the whole balance by resolution/cancel paths, or — after
+  `Completed`/`Cancelled` — stranded, since no instruction moves funds in a
+  terminal state. Fold a residue sweep into the vault-close work.
 - Confidential transfers (layout reserved; proof program re-enabled June 2026).
 - Transfer-hook mints with a live hook program (rejected today).
 - Multi-mint deals; partial deposits from multiple payers.
