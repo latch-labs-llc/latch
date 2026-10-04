@@ -14,15 +14,4 @@ export default defineConfig({
       buffer: "buffer",
     },
   },
-  // @latch-labs/checkout is a file: workspace dependency (symlinked outside
-  // node_modules) until its first npm release; include it in the CJS
-  // transform and dep prebundle so named exports resolve.
-  optimizeDeps: {
-    include: ["@latch-labs/checkout"],
-  },
-  build: {
-    commonjsOptions: {
-      include: [/node_modules/, /clients\/ts\/packages\/checkout/],
-    },
-  },
 });
