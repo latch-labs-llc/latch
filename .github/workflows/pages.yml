@@ -33,6 +33,9 @@ jobs:
         working-directory: app
         env:
           LATCH_PAGES: "1"
+          # Dedicated devnet RPC for the hosted app (public fallback stays in
+          # code for local dev). Frontend RPC keys are public by nature.
+          VITE_RPC_URL: "https://devnet.helius-rpc.com/?api-key=138c20ce-85d1-47bb-a549-5976ab555712"
         run: npm ci && npm run build
       - name: Build SDK API docs
         working-directory: clients/ts
