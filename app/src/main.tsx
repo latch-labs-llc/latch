@@ -1,5 +1,4 @@
-import { Buffer } from "buffer";
-(globalThis as any).Buffer = Buffer;
+import "./polyfill"; // must stay first — see polyfill.ts
 
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
