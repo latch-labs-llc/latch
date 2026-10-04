@@ -40,7 +40,7 @@ export default function Landing() {
           </a>
           <div className="lp-links">
             <a href="#/store">Demo store</a>
-            <a href="#/orbit">Second merchant</a>
+            <a href="#/cheat">Try to cheat</a>
             <a href="https://latchlabs.org/api/" target="_blank" rel="noreferrer">Docs</a>
             <a href="https://github.com/latch-labs-llc/latch" target="_blank" rel="noreferrer">GitHub</a>
           </div>
@@ -126,6 +126,10 @@ export default function Landing() {
               </tbody>
             </table>
           </div>
+          <p className="lp-dim" style={{ marginTop: 14 }}>
+            Don't take the table's word for it — <a href="#/cheat">attack a real funded deal and watch the
+            program reject every attempt →</a>
+          </p>
         </div>
       </section>
 
@@ -246,7 +250,7 @@ export default function Landing() {
           <div>
             <h4>Product</h4>
             <a href="#/store">Demo store</a>
-            <a href="#/orbit">Second merchant</a>
+            <a href="#/cheat">Try to cheat</a>
             <a href="#/about">What is Latch?</a>
           </div>
           <div>
