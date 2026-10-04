@@ -137,6 +137,7 @@ rebuilt on every push).
 - `programs/latch/examples/devnet_e2e.rs` — scripted devnet lifecycle
 - `app/` — wallet-connected reference web app (live at the link above)
 - `demo/` — scripted reference demo server (marketplace sale + signature certificate)
+- `SPEC.md` — versioned specification of the agreement format behind `terms_hash`, with test vectors
 - `DECISIONS.md` — design decision log with reasoning
 - `SECURITY_NOTES.md` — assumptions, trust boundaries, known risks (for reviewers)
 - `ZK_NOTES.md` — confidential-transfer status and phase-2 design
