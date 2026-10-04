@@ -130,16 +130,37 @@ export default function Home() {
 
   if (!publicKey) {
     return (
-      <div className="card center">
-        <h1>Deals that neither side can walk away with.</h1>
-        <p>
-          Lock payment in an escrow vault that no party — and no operator — can move alone. Funds release on the
-          approvals and rules both sides chose up front, with every signature recorded on-chain.
+      <>
+        <div className="card center hero">
+          <h1>Payments between strangers, protected on both sides.</h1>
+          <p>
+            Latch holds the buyer's payment in a vault neither side — and no operator — can move alone, and releases
+            it under rules both parties chose up front. Final settlement for the seller, no chargebacks; delivery
+            protection for the buyer; a court-readable record of every signature.
+          </p>
+          <div className="ctas">
+            <a className="btnlike gold" href="#/store">🛒 Try the demo store — no wallet needed</a>
+            <a className="btnlike" href="#/orbit">🛰 Second merchant, ~15-line integration</a>
+            <a className="btnlike" href="https://latch-labs-llc.github.io/latch/api/" target="_blank" rel="noreferrer">
+              📘 SDK API reference
+            </a>
+          </div>
+        </div>
+        <div className="card">
+          <h3>What's underneath</h3>
+          <ul className="features">
+            <li>Six resolution rules fixed at signing — timeouts, auto-split, a named arbiter, or consented true deadlock.</li>
+            <li>Party-chosen recovery for lost keys and court orders: payouts only to the parties, after on-chain notice.</li>
+            <li>The legal agreement is hashed on-chain and self-verifying — anyone can rebuild the signature certificate from public data.</li>
+            <li>Token-2022 aware: freeze and seize powers are vetted and disclosed before any deal starts.</li>
+            <li>Verified reproducible build; permissionless release cranks; Apache-2.0, no token, no fees.</li>
+          </ul>
+        </div>
+        <p className="center muted">
+          Building custom deals (milestones, arbiters, disputes)? Connect a wallet above — or pick <b>Burner Wallet</b>{" "}
+          for a zero-setup throwaway.
         </p>
-        <p className="muted">
-          Connect a wallet to begin. No wallet installed? Pick <b>Burner Wallet</b> for a zero-setup throwaway.
-        </p>
-      </div>
+      </>
     );
   }
 
