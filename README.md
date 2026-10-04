@@ -94,7 +94,7 @@ Prereqs: Rust (stable), Solana CLI (Agave 4.x), Anchor 1.2.x.
 
 ```sh
 make build     # anchor build --arch v0  (required flag — see note)
-make test      # 42 LiteSVM tests: lifecycle, every failure path, all six
+make test      # 45 LiteSVM tests: lifecycle, every failure path, all six
                # rules & both timer modes, recovery, hostile Token-2022
                # mints, and real ZK proof verification
 ```
