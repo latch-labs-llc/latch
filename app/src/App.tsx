@@ -3,12 +3,13 @@ import { useEffect, useState } from "react";
 import Certificate from "./pages/Certificate";
 import Deal from "./pages/Deal";
 import Home from "./pages/Home";
+import Landing from "./pages/Landing";
 import Orbit from "./pages/Orbit";
 import Store from "./pages/Store";
 
 /** Tiny hash router: #/ , #/deal/<address>?s=<subject> , #/cert/<address>?s=... */
 export interface Route {
-  page: "home" | "deal" | "cert" | "store" | "orbit";
+  page: "home" | "deal" | "cert" | "store" | "orbit" | "about";
   address?: string;
   subject: string;
 }
@@ -22,6 +23,7 @@ function parseHash(): Route {
   if (page === "cert" && address) return { page: "cert", address, subject };
   if (page === "store") return { page: "store", subject: "" };
   if (page === "orbit") return { page: "orbit", subject: "" };
+  if (page === "about") return { page: "about", subject: "" };
   return { page: "home", subject: "" };
 }
 
@@ -49,10 +51,12 @@ export default function App() {
         {route.page === "home" && <Home />}
         {route.page === "store" && <Store />}
         {route.page === "orbit" && <Orbit />}
+        {route.page === "about" && <Landing />}
         {route.page === "deal" && <Deal address={route.address!} subject={route.subject} />}
         {route.page === "cert" && <Certificate address={route.address!} subject={route.subject} />}
       </main>
       <footer>
+        <a href="#/about">What is Latch?</a> ·{" "}
         <a href="https://github.com/latch-labs-llc/latch" target="_blank" rel="noreferrer">GitHub</a> ·{" "}
         <a href="https://www.npmjs.com/package/@latch-labs/sdk" target="_blank" rel="noreferrer">SDK</a> ·
         program <code>BT8tr…v5yv</code> · Apache-2.0
