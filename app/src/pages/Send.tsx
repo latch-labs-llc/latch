@@ -128,7 +128,7 @@ export default function Send() {
             🛡 Protected
             <span>Held until you confirm — or 7 days after you both start. A dispute pauses the clock; then it moves only when you both agree.</span>
           </button>
-          <a className="dialmore" href="#/">
+          <a className="dialmore" href="#/new">
             ⚙️ Custom
             <span>Milestones, arbiters, timers — the full deal form.</span>
           </a>

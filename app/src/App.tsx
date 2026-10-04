@@ -12,7 +12,7 @@ import Store from "./pages/Store";
 
 /** Tiny hash router: #/ , #/deal/<address>?s=<subject> , #/cert/<address>?s=... */
 export interface Route {
-  page: "home" | "deal" | "cert" | "store" | "orbit" | "about" | "cheat" | "send";
+  page: "home" | "new" | "deal" | "cert" | "store" | "orbit" | "about" | "cheat" | "send";
   address?: string;
   subject: string;
 }
@@ -29,6 +29,7 @@ function parseHash(): Route {
   if (page === "about") return { page: "about", subject: "" };
   if (page === "cheat") return { page: "cheat", subject: "" };
   if (page === "send") return { page: "send", subject: "" };
+  if (page === "new") return { page: "new", subject: "" };
   return { page: "home", subject: "" };
 }
 
@@ -73,7 +74,7 @@ export default function App() {
         Unaudited, experimental software on Solana <b>devnet</b> — test tokens only, never real funds.
       </div>
       <main>
-        {route.page === "home" && <Home />}
+        {(route.page === "home" || route.page === "new") && <Home />}
         {route.page === "store" && <Store />}
         {route.page === "cheat" && <Cheat />}
         {route.page === "send" && <Send />}

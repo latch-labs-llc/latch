@@ -129,7 +129,17 @@ export default function Home() {
     });
 
   if (!publicKey) {
-    return null; // App renders the standalone Landing for disconnected visitors
+    // Reached via #/new (the explicit full-form route). Disconnected #/
+    // never gets here — App renders the standalone Landing instead.
+    return (
+      <div className="card center">
+        <h1 style={{ marginBottom: 6 }}>The full deal form</h1>
+        <p className="muted" style={{ maxWidth: 560, margin: "0 auto" }}>
+          Milestones, arbiters, timers, party-chosen recovery signers — every formation parameter, no presets.
+          Connect a wallet above to build one; Burner Wallet works for trying it.
+        </p>
+      </div>
+    );
   }
 
   return (
