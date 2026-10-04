@@ -42,3 +42,9 @@ curl -s http://127.0.0.1:8899 -X POST -H 'Content-Type: application/json' \
 
 LATCH_RPC=http://127.0.0.1:8899 LATCH_FUNDER="$FUNDER" node "$E2E"
 echo "LOCAL-VALIDATOR SDK E2E: PASS"
+
+CHECKOUT_E2E=clients/ts/packages/checkout/dist/e2e/local.js
+if [ -f "$CHECKOUT_E2E" ]; then
+  LATCH_RPC=http://127.0.0.1:8899 LATCH_FUNDER="$FUNDER" node "$CHECKOUT_E2E"
+  echo "LOCAL-VALIDATOR CHECKOUT E2E: PASS"
+fi
