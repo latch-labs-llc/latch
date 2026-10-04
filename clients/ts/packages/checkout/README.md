@@ -73,7 +73,7 @@ without changing merchant code structure.
 ## See it live
 
 Two demo storefronts run on this package against Solana devnet:
-https://latch-labs-llc.github.io/latch/ — including guest card checkout with
+https://latchlabs.org/ — including guest card checkout with
 zero wallets and a mid-flight interruption test in CI.
 
 Apache-2.0.

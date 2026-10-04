@@ -141,7 +141,7 @@ export default function Home() {
           <div className="ctas">
             <a className="btnlike gold" href="#/store">🛒 Try the demo store — no wallet needed</a>
             <a className="btnlike" href="#/orbit">🛰 Second merchant, ~15-line integration</a>
-            <a className="btnlike" href="https://latch-labs-llc.github.io/latch/api/" target="_blank" rel="noreferrer">
+            <a className="btnlike" href="https://latchlabs.org/api/" target="_blank" rel="noreferrer">
               📘 SDK API reference
             </a>
           </div>

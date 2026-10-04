@@ -3,8 +3,8 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react()],
-  // GitHub Pages serves from /latch/
-  base: process.env.LATCH_PAGES ? "/latch/" : "/",
+  // Served at the custom domain root (latchlabs.org)
+  base: "/",
   define: {
     "process.env": {},
     global: "globalThis",

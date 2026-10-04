@@ -25,7 +25,7 @@ Maintained by Latch Labs LLC (in formation). Apache-2.0.
 | Explorer | https://explorer.solana.com/address/BT8tr7YXYLQPsLMq3qCipY1fBKyjT3gmGQB5amV2v5yv?cluster=devnet |
 | Verified hash | `fa6d6982dd563133a6363deb40bedd0885f800c1484eca80887b60dea3934f82` |
 
-**Try it live (devnet):** https://latch-labs-llc.github.io/latch/ — connect Phantom, Solflare, or a zero-setup burner wallet; built-in test-token faucet.
+**Try it live (devnet):** https://latchlabs.org/ — connect Phantom, Solflare, or a zero-setup burner wallet; built-in test-token faucet.
 
 **Demo videos:** [Full sale lifecycle](https://youtu.be/69Psn335b_I) · [Dispute raised and settled on-chain](https://youtu.be/lbIxBCt56W0)
 
@@ -127,7 +127,7 @@ npm install -g @latch-labs/cli  # full-lifecycle `latch` command
 ```
 
 See `clients/ts/packages/*/README.md` for quickstarts, and the
-[SDK API reference](https://latch-labs-llc.github.io/latch/api/) (typedoc,
+[SDK API reference](https://latchlabs.org/api/) (typedoc,
 rebuilt on every push).
 
 ## Repository

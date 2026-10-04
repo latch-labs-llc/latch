@@ -2,7 +2,7 @@
 
 Wallet-connected split-control escrow on Solana **devnet**, built on
 [`@latch-labs/sdk`](https://www.npmjs.com/package/@latch-labs/sdk).
-Live: https://latch-labs-llc.github.io/latch/
+Live: https://latchlabs.org/
 
 Two surfaces:
 
