@@ -277,3 +277,4 @@ button.ghost:hover { background: none; }
 .lp-chip-next { background: rgba(59,108,255,.16); color: #8fb0ff; border: 1px solid rgba(126,164,255,.3); }
 .lp-chip-exp { background: rgba(255,255,255,.06); color: var(--lp-dim); border: 1px solid var(--lp-line); }
 .lp-road-note { margin-top: 18px; font-size: .9em; }
+.lp-herobadge { display: inline-block; font-size: .78em; font-weight: 600; color: #a9c2ff; background: rgba(59,108,255,.14); border: 1px solid rgba(126,164,255,.28); border-radius: 999px; padding: 6px 14px; margin-bottom: 18px; letter-spacing: .02em; }

@@ -53,6 +53,7 @@ export default function Landing() {
       <header className="lp-hero">
         <div className="lp-wrap lp-hero-grid">
           <div>
+            <div className="lp-herobadge">⬡ Open-source public-goods infrastructure · built on Solana · Apache-2.0</div>
             <h1>
               Payments between strangers,
               <br />
@@ -216,8 +217,8 @@ export default function Landing() {
             </div>
             <div>
               <span className="lp-chip lp-chip-exp">Exploring</span>
-              <h3>Confidential amounts</h3>
-              <p>Token-2022 confidential transfers for deal amounts; the account layout already reserves the space.</p>
+              <h3>Confidential amounts (ZK proofs)</h3>
+              <p>Token-2022 confidential transfers hide deal amounts behind zero-knowledge proofs. The test suite already verifies real ZK ElGamal proofs; the account layout reserves the space.</p>
             </div>
           </div>
           <p className="lp-dim lp-road-note">
