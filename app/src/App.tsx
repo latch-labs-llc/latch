@@ -38,7 +38,7 @@ export default function App() {
       <header>
         <a className="brand" href="#/">
           <span className="logo">⟟</span> Latch
-          <span className="tag">split-control escrow · devnet</span>
+          <span className="tag">protected payments · devnet</span>
         </a>
         <WalletMultiButton />
       </header>
