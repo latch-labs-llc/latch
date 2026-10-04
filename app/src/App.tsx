@@ -39,9 +39,21 @@ export default function App() {
     <div className="shell">
       <header>
         <a className="brand" href="#/">
-          <span className="logo">⟟</span> Latch
-          <span className="tag">protected payments · devnet</span>
+          <svg className="logo-svg" width="22" height="27" viewBox="0 0 460 560" aria-hidden="true">
+            <path d="M130 230 v-60 a100 100 0 0 1 200 0 v60" fill="none" stroke="#1d4fd7" strokeWidth="44" strokeLinecap="round" />
+            <rect x="70" y="230" width="320" height="260" rx="56" fill="none" stroke="#1d4fd7" strokeWidth="44" />
+            <circle cx="160" cy="360" r="28" fill="#1d4fd7" />
+            <circle cx="300" cy="360" r="28" fill="#1d4fd7" />
+            <rect x="196" y="346" width="68" height="26" rx="13" fill="#1d4fd7" />
+          </svg>
+          Latch <span className="tag">protected payments · devnet</span>
         </a>
+        <nav className="main">
+          <a href="#/store">Store</a>
+          <a href="#/orbit">Orbit</a>
+          <a href="#/about">About</a>
+          <a href="https://latchlabs.org/api/" target="_blank" rel="noreferrer">Docs</a>
+        </nav>
         <WalletMultiButton />
       </header>
       <div className="warnbar">
