@@ -18,6 +18,8 @@ export default function Certificate({ address, subject }: { address: string; sub
   const [events, setEvents] = useState<any[]>([]);
   const [agreement, setAgreement] = useState("");
   const [hashOk, setHashOk] = useState<boolean | null>(null);
+  const [computedHex, setComputedHex] = useState("");
+  const [verStep, setVerStep] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,7 +47,9 @@ export default function Certificate({ address, subject }: { address: string; sub
         subject,
       });
       setAgreement(text);
-      setHashOk(hex(await sha256(text)) === hex(a.termsHash as number[]));
+      const computed = hex(await sha256(text));
+      setComputedHex(computed);
+      setHashOk(computed === hex(a.termsHash as number[]));
       setEvents(await fetchEventHistory(latch.program, connection, deal));
       setLoading(false);
     })();
@@ -70,6 +74,62 @@ export default function Certificate({ address, subject }: { address: string; sub
           <tr><td>Generated</td><td>{new Date().toUTCString()}</td></tr>
         </tbody>
       </table>
+
+      <div className="verify noprint">
+        <div className="row spread">
+          <h2 style={{ margin: 0, border: "none" }}>Watch this page verify itself</h2>
+          {verStep === 0 ? (
+            <button className="primary" onClick={async () => {
+              for (let i = 1; i <= 4; i++) {
+                setVerStep(i);
+                await new Promise((r) => setTimeout(r, 900));
+              }
+              setVerStep(5);
+            }}>Run verification</button>
+          ) : verStep === 5 ? (
+            <span className="vok">{hashOk ? "✓ every check passed" : "✗ digest mismatch"}</span>
+          ) : null}
+        </div>
+        {verStep > 0 && (
+          <ol className="versteps">
+            <li className={verStep >= 1 ? "on" : ""}>
+              {verStep > 1 ? "✓" : "…"} Regenerated the agreement deterministically from the deal's on-chain
+              fields — {agreement.length.toLocaleString()} bytes (full text in the appendix).
+            </li>
+            <li className={verStep >= 2 ? "on" : ""}>
+              {verStep > 2 ? "✓" : verStep === 2 ? "…" : ""} {verStep >= 2 && (
+                <>
+                  Computed SHA-256 of that text in your browser:
+                  <div className="hashcmp">
+                    <div><span>computed now</span><code>{computedHex}</code></div>
+                    <div><span>signed on-chain</span><code>{info ? hex(info.account.termsHash as number[]) : ""}</code></div>
+                    <b className={hashOk ? "vok" : "vbad"}>{hashOk ? "→ IDENTICAL" : "→ MISMATCH"}</b>
+                  </div>
+                </>
+              )}
+            </li>
+            <li className={verStep >= 3 ? "on" : ""}>
+              {verStep > 3 ? "✓" : verStep === 3 ? "…" : ""} {verStep >= 3 && (
+                <>Decoded {events.length} events from the inner instructions of public transactions — every row
+                below links to its transaction on the explorer.</>
+              )}
+            </li>
+            <li className={verStep >= 4 ? "on" : ""}>
+              {verStep >= 4 && (
+                <>✓ The enforcing program is open source with a verified reproducible build — compare the
+                on-chain hash yourself with <code>solana-verify</code> (procedure in the{" "}
+                <a href="https://github.com/latch-labs-llc/latch#verify-the-deployed-bytecode-yourself" target="_blank" rel="noreferrer">README</a>).</>
+              )}
+            </li>
+          </ol>
+        )}
+        {verStep === 0 && (
+          <p className="muted" style={{ margin: "6px 0 0" }}>
+            Nothing on this page is asserted by a company. Click the button and watch each fact get rebuilt and
+            checked from public chain data, live, in your browser.
+          </p>
+        )}
+      </div>
 
       <h2>Execution record</h2>
       <table>

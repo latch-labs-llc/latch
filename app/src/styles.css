@@ -278,3 +278,22 @@ button.ghost:hover { background: none; }
 .lp-chip-exp { background: rgba(255,255,255,.06); color: var(--lp-dim); border: 1px solid var(--lp-line); }
 .lp-road-note { margin-top: 18px; font-size: .9em; }
 .lp-herobadge { display: inline-block; font-size: .78em; font-weight: 600; color: #a9c2ff; background: rgba(59,108,255,.14); border: 1px solid rgba(126,164,255,.28); border-radius: 999px; padding: 6px 14px; margin-bottom: 18px; letter-spacing: .02em; }
+
+/* certificate: interactive verification walkthrough */
+.verify { background: #f4f8ff; border: 1px solid #d9e4ff; border-radius: 10px; padding: 14px 18px; margin: 18px 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+.versteps { margin: 12px 0 2px; padding-left: 18px; display: grid; gap: 10px; font-size: .9em; }
+.versteps li { opacity: .35; transition: opacity .4s; }
+.versteps li.on { opacity: 1; }
+.hashcmp { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 6px; font-size: .85em; overflow-x: auto; }
+.hashcmp > div { display: flex; gap: 10px; align-items: baseline; }
+.hashcmp span { color: var(--sub); min-width: 110px; font-size: .85em; }
+.hashcmp code { word-break: break-all; }
+.vok { color: #1e6b47; font-weight: 700; }
+.vbad { color: var(--danger); font-weight: 700; }
+
+/* send page: the protection dial */
+.dial { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.dial button, .dial .dialmore { text-align: left; font-weight: 700; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; text-decoration: none; font-size: 1em; }
+.dial span { display: block; font-weight: 400; font-size: .78em; color: var(--sub); margin-top: 4px; }
+.dial button.on { border-color: var(--brand); background: var(--blue-tint); box-shadow: 0 0 0 1px var(--brand) inset; }
+.dial .dialmore:hover, .dial button:hover { border-color: var(--brand); background: var(--blue-tint); }

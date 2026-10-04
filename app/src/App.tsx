@@ -7,11 +7,12 @@ import Deal from "./pages/Deal";
 import Home from "./pages/Home";
 import Landing from "./pages/Landing";
 import Orbit from "./pages/Orbit";
+import Send from "./pages/Send";
 import Store from "./pages/Store";
 
 /** Tiny hash router: #/ , #/deal/<address>?s=<subject> , #/cert/<address>?s=... */
 export interface Route {
-  page: "home" | "deal" | "cert" | "store" | "orbit" | "about" | "cheat";
+  page: "home" | "deal" | "cert" | "store" | "orbit" | "about" | "cheat" | "send";
   address?: string;
   subject: string;
 }
@@ -27,6 +28,7 @@ function parseHash(): Route {
   if (page === "orbit") return { page: "orbit", subject: "" };
   if (page === "about") return { page: "about", subject: "" };
   if (page === "cheat") return { page: "cheat", subject: "" };
+  if (page === "send") return { page: "send", subject: "" };
   return { page: "home", subject: "" };
 }
 
@@ -59,6 +61,7 @@ export default function App() {
           Latch <span className="tag">protected payments · devnet</span>
         </a>
         <nav className="main">
+          <a href="#/send">Send</a>
           <a href="#/store">Store</a>
           <a href="#/orbit">Orbit</a>
           <a href="#/about">About</a>
@@ -73,6 +76,7 @@ export default function App() {
         {route.page === "home" && <Home />}
         {route.page === "store" && <Store />}
         {route.page === "cheat" && <Cheat />}
+        {route.page === "send" && <Send />}
         {route.page === "orbit" && <Orbit />}
         {route.page === "deal" && <Deal address={route.address!} subject={route.subject} />}
         {route.page === "cert" && <Certificate address={route.address!} subject={route.subject} />}
