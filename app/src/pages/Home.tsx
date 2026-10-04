@@ -154,6 +154,10 @@ export default function Home() {
             <li>The legal agreement is hashed on-chain and self-verifying — anyone can rebuild the signature certificate from public data.</li>
             <li>Token-2022 aware: freeze and seize powers are vetted and disclosed before any deal starts.</li>
             <li>Verified reproducible build; permissionless release cranks; Apache-2.0, no token, no fees.</li>
+            <li>
+              Nothing to host, no one to trust: the program runs on Solana itself, anyone can execute any step, and
+              this app is an optional, forkable static page — every deal settles even if Latch Labs vanishes.
+            </li>
           </ul>
         </div>
         <p className="center muted">

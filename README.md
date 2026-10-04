@@ -55,7 +55,10 @@ at once — the buyer can't be taken for their money, the seller gets final
 settlement — with courts as the backstop, not the counterparty's goodwill.
 Latch is the open, non-custodial primitive for that: a structured approval
 workflow over a vault, designed so the operator of any product built on it
-never holds or controls user funds.
+never holds or controls user funds. There is no server and nothing to host —
+the program runs on Solana itself, every release and resolution is a
+permissionless crank anyone can execute, and the web app is an optional,
+forkable static page. Every deal settles even if Latch Labs vanishes.
 
 ## How it works
 
