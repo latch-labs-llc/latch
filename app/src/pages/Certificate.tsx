@@ -21,6 +21,7 @@ export default function Certificate({ address, subject }: { address: string; sub
   const [computedHex, setComputedHex] = useState("");
   const [verStep, setVerStep] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [prov, setProv] = useState<{ slot: number; genesis: string; at: string } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -51,6 +52,8 @@ export default function Certificate({ address, subject }: { address: string; sub
       setComputedHex(computed);
       setHashOk(computed === hex(a.termsHash as number[]));
       setEvents(await fetchEventHistory(latch.program, connection, deal));
+      const [slot, genesis] = await Promise.all([connection.getSlot("confirmed"), connection.getGenesisHash()]);
+      setProv({ slot, genesis, at: new Date().toUTCString() });
       setLoading(false);
     })();
   }, [latch, address]);
@@ -71,7 +74,10 @@ export default function Certificate({ address, subject }: { address: string; sub
             <td>Digest verification</td>
             <td>{hashOk === true ? "✓ regenerated agreement text matches on-chain digest" : hashOk === false ? "✗ MISMATCH — subject line missing or altered in link" : "…"}</td>
           </tr>
-          <tr><td>Generated</td><td>{new Date().toUTCString()}</td></tr>
+          <tr><td>Read via RPC</td><td><code>{connection.rpcEndpoint}</code></td></tr>
+          <tr><td>Slot at retrieval</td><td>{prov ? prov.slot.toLocaleString() : "…"}</td></tr>
+          <tr><td>Cluster genesis hash</td><td><code>{prov?.genesis ?? "…"}</code> (identifies the cluster)</td></tr>
+          <tr><td>Retrieved (local clock)</td><td>{prov?.at ?? "…"}</td></tr>
         </tbody>
       </table>
 
@@ -156,7 +162,7 @@ export default function Certificate({ address, subject }: { address: string; sub
               <td>{ts(e.blockTime)}</td>
               <td>
                 <a href={`https://explorer.solana.com/tx/${e.signature}?cluster=devnet`} target="_blank" rel="noreferrer">
-                  <code>{e.signature.slice(0, 16)}…</code>
+                  <code style={{ wordBreak: "break-all" }}>{e.signature}</code>
                 </a>
               </td>
             </tr>
@@ -176,7 +182,8 @@ export default function Certificate({ address, subject }: { address: string; sub
         <li>
           Every fact above was read from the Solana blockchain at deal account <code>{address}</code> via public
           RPC. Nothing comes from a private database or any company's records; the operator of this page holds no
-          information a third party cannot retrieve independently.
+          information a third party cannot retrieve independently. The exact RPC endpoint, slot, cluster genesis
+          hash, and retrieval time are recorded in the table at the top of this certificate.
         </li>
         <li>
           The execution record reflects the deal account's on-chain state. The event history is decoded from the

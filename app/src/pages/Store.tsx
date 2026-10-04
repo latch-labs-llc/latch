@@ -58,7 +58,7 @@ export default function Store() {
     <div className="store">
       <div className="store-hero">
         <h1>🌳 {MERCHANT_NAME}</h1>
-        <p>Fine furniture from strangers on the internet — protected by Latch escrow, not by promises.</p>
+        <p>Fine furniture from strangers on the internet — protected by Latch, not by promises.</p>
         <p className="muted">
           Demo storefront on Solana devnet. Prices in LDD test dollars. Merchant wallet:{" "}
           <code>{short(MERCHANT_PUBKEY.toBase58(), 4)}</code>
@@ -118,7 +118,7 @@ export default function Store() {
       )}
       <p className="center muted">
         This is the embeddable "Latch Checkout" experience — any merchant adds it with{" "}
-        <code>@latch-labs/checkout</code>. Funds sit in split-control escrow: the merchant can't take them early,
+        <code>@latch-labs/checkout</code>. Funds sit under split control: the merchant can't take them early,
         the buyer can't claw them back after delivery. See the <a href="#/orbit">other demo merchant</a> running on
         the same package.
       </p>
@@ -219,9 +219,9 @@ function CheckoutSheet({
               <div className="price">${product.price}.00</div>
             </div>
             <div className="protection">
-              🛡 <b>Latch Buyer–Seller Protection.</b> Your payment is held in escrow that neither you nor the
-              merchant can take alone. It releases when you confirm delivery — or automatically after 7 days unless
-              you open a dispute (a dispute pauses the clock). Every signature is recorded on-chain.
+              🛡 <b>Protected payment.</b> Your payment is held so that neither you nor the merchant can take it
+              alone. It releases when you confirm delivery — or after 7 days unless you open a dispute; a dispute
+              pauses the clock, and then it moves only when you both agree. Every signature is recorded on-chain.
             </div>
           </>
         )}
@@ -235,7 +235,7 @@ function CheckoutSheet({
             )}
             <label className="consent">
               <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /> I agree to the
-              escrow agreement for this purchase and consent to sign electronically. (The full agreement is hashed
+              purchase agreement and consent to sign electronically. (The full agreement is hashed
               on-chain; view it on the deal page after checkout.)
             </label>
             <button className="primary wide" disabled={!agree} onClick={payWithWallet}>
@@ -252,7 +252,7 @@ function CheckoutSheet({
           <>
             <div className="simbanner">
               SIMULATED — devnet only. In production this is a licensed onramp partner (MoonPay / Stripe); your
-              card buys stablecoins that go straight into escrow. Here it delivers test dollars.
+              card buys stablecoins that go straight into the deal's on-chain vault. Here it delivers test dollars.
             </div>
             <label>Card number<input defaultValue="4242 4242 4242 4242" /></label>
             <div className="row">
@@ -283,7 +283,7 @@ function CheckoutSheet({
           <div className="center">
             <h2>🎉 Order placed</h2>
             <p>
-              <b>${product.price}.00</b> is in split-control escrow for “{product.name}.”
+              <b>${product.price}.00</b> is held under split control for “{product.name}.”
               The merchant has countersigned; the deal is active on Solana devnet.
             </p>
             <p>

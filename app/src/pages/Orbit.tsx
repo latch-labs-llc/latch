@@ -65,7 +65,7 @@ export default function Orbit() {
     <div className="store orbit">
       <div className="store-hero orbit-hero">
         <h1>🛰 Orbit Supply Co.</h1>
-        <p>Gear for people who read the manual. A different merchant — the same escrow rails.</p>
+        <p>Gear for people who read the manual. A different merchant — the same protected-payment rails.</p>
         <p className="muted">
           This whole storefront's Latch integration is ~15 lines of{" "}
           <a href="https://github.com/latch-labs-llc/latch/blob/main/app/src/pages/Orbit.tsx" target="_blank" rel="noreferrer">
@@ -99,7 +99,7 @@ export default function Orbit() {
       {error && <div className="card error">{error}</div>}
       {deal && (
         <div className="card">
-          ✅ <b>Order placed.</b> Payment is in split-control escrow.{" "}
+          ✅ <b>Order placed.</b> Payment is held under split control.{" "}
           <a href={`#/deal/${deal}?s=${subject}`}>View the deal</a> ·{" "}
           <a href={`#/cert/${deal}?s=${subject}`}>certificate</a>
         </div>

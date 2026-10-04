@@ -27,7 +27,7 @@ const main = async () => {
 
   console.log("opening checkout for the desk…");
   await page.getByRole("button", { name: /pay with latch/i }).first().click();
-  await page.getByText(/Latch Buyer.Seller Protection/i).waitFor({ timeout: 10000 });
+  await page.getByText(/Protected payment\./i).waitFor({ timeout: 10000 });
   await shot(page, "pay-sheet");
 
   await page.locator(".consent input").check();

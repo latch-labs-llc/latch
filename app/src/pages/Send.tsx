@@ -126,7 +126,7 @@ export default function Send() {
           </button>
           <button className={dial === "protected" ? "on" : ""} onClick={() => setDial("protected")}>
             🛡 Protected
-            <span>Held in escrow; releases when you confirm — or after 7 days unless you dispute.</span>
+            <span>Held until you confirm — or 7 days after you both start. A dispute pauses the clock; then it moves only when you both agree.</span>
           </button>
           <a className="dialmore" href="#/">
             ⚙️ Custom
@@ -154,7 +154,7 @@ export default function Send() {
           <p className="muted">
             This creates the deal and signs your side. Send the link to the recipient — they countersign the
             hashed agreement, then you fund it. Every signature lands on-chain; the order ends with a
-            court-verifiable certificate.
+            court-readable certificate.
           </p>
         )}
         {dial === "instant" && (
