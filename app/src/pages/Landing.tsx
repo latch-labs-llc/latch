@@ -39,6 +39,7 @@ export default function Landing() {
             Latch
           </a>
           <div className="lp-links">
+            <a href="#/send">Send money</a>
             <a href="#/store">Demo store</a>
             <a href="#/cheat">Try to cheat</a>
             <a href="https://latchlabs.org/api/" target="_blank" rel="noreferrer">Docs</a>
@@ -66,7 +67,7 @@ export default function Landing() {
             </p>
             <div className="lp-ctas">
               <a className="lp-btn lp-btn-primary" href="#/store">Try the demo store →</a>
-              <a className="lp-btn" href="https://latchlabs.org/api/" target="_blank" rel="noreferrer">Read the docs</a>
+              <a className="lp-btn" href="#/send">Send a protected payment</a>
             </div>
             <div className="lp-metrics">
               <span><b>45</b> tests, every failure path</span>
@@ -130,6 +131,31 @@ export default function Landing() {
           <p className="lp-dim" style={{ marginTop: 14 }}>
             Don't take the table's word for it — <a href="#/cheat">attack a real funded deal and watch the
             program reject every attempt →</a>
+          </p>
+        </div>
+      </section>
+
+      <section className="lp-section">
+        <div className="lp-wrap">
+          <div className="lp-eyebrow">One form, one spectrum</div>
+          <h2>Protection is the dial.</h2>
+          <div className="lp-steps">
+            <div>
+              <h3>⚡ Instant</h3>
+              <p>A plain transfer, final immediately. For people you trust — the baseline every wallet already gives you.</p>
+            </div>
+            <div>
+              <h3>🛡 Protected</h3>
+              <p>Held until the buyer confirms — or 7 days after both sides start. A dispute pauses the clock; then the money moves only when both sides agree.</p>
+            </div>
+            <div>
+              <h3>⚙️ Custom</h3>
+              <p>Milestones, arbiters, timers, party-chosen recovery signers — the full deal form, for when it's serious.</p>
+            </div>
+          </div>
+          <p className="lp-dim" style={{ marginTop: 14 }}>
+            Same rails underneath — the dial just sets the deal's formation parameters.{" "}
+            <a href="#/send">Send a protected payment →</a>
           </p>
         </div>
       </section>
@@ -201,9 +227,9 @@ export default function Landing() {
               <p>External security review, then mainnet with the upgrade key in a Squads multisig behind a timelock. Real money only after real review.</p>
             </div>
             <div>
-              <span className="lp-chip lp-chip-next">Next</span>
+              <span className="lp-chip lp-chip-done">Shipped</span>
               <h3>Protection is the dial</h3>
-              <p>A consumer payments app on the same rails: instant with friends, held-until-delivery with strangers, full milestones and arbiters when you need them.</p>
+              <p>The dial is live on this site: instant with friends, held-until-you-confirm with strangers, the full deal form when it's serious — <a href="#/send">try a protected send →</a>. The standalone consumer app builds on it.</p>
             </div>
             <div>
               <span className="lp-chip lp-chip-next">Next</span>
@@ -250,6 +276,7 @@ export default function Landing() {
           </div>
           <div>
             <h4>Product</h4>
+            <a href="#/send">Send money</a>
             <a href="#/store">Demo store</a>
             <a href="#/cheat">Try to cheat</a>
             <a href="#/about">What is Latch?</a>
