@@ -103,7 +103,7 @@ export default function Landing() {
             <div>
               <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#7ea4ff" strokeWidth="1.8"><path d="M5 12l5 5L20 7" /></svg>
               <h3>Settle</h3>
-              <p>Funds release on delivery confirmation, a protection timer, a joint settlement, or the rule fixed up front. Anyone can execute it.</p>
+              <p>Funds release on delivery confirmation, a protection timer, a joint settlement, or the rule fixed up front. Once a payout is due, anyone can submit it — no one can redirect it.</p>
             </div>
           </div>
         </div>
@@ -260,8 +260,8 @@ export default function Landing() {
           <Lock size={34} color="#8fb0ff" />
           <h2>Nothing to host. No one to trust.</h2>
           <p>
-            The program runs on Solana itself. Every release is a permissionless crank anyone can execute, and
-            this site is an optional, forkable static page. Apache-2.0, no token, no fees in the protocol —{" "}
+            The program runs on Solana itself. Every release is a permissionless crank — anyone can submit it,
+            no one can redirect it — and this site is an optional, forkable static page. Apache-2.0, no token, no fees in the protocol —{" "}
             <b>every deal settles even if Latch Labs vanishes.</b>
           </p>
           <a className="lp-btn lp-btn-primary" href="#/store">Try it in 60 seconds — no wallet needed</a>
