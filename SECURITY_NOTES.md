@@ -20,7 +20,10 @@ randomized state-machine test (`tests/test_invariants_fuzz.rs`: token
 conservation, terminal finality, payouts only to recorded parties, no
 single-party fund movement, clock accounting — checked after every step),
 extended the lapse refund to partially funded deals (a partial deposit could
-previously be stranded in Signed), and added `refund_by_payee`. The notes
+previously be stranded in Signed), added `refund_by_payee`, and — from a fuzz
+finding — clears recovery signatures at activation (a pre-activation
+signature could otherwise complete a recovery payout after delivery when the
+notice delay is zero). The notes
 below reflect the post-fix behavior.
 
 ## Program-level
@@ -41,9 +44,12 @@ below reflect the post-fix behavior.
 3. **Deadlock stalling incentives.** Timeout rules favor whoever the clock helps;
    they can simply go quiet. Product-layer disclosure, not fixable in-program.
    In `FromActivation` mode a raised dispute pauses the clock and only the
-   raiser may withdraw it, so the raiser can hold the vault until a mutual
-   settlement, a recovery, or (if the payee raised it) a payee refund. A
-   bounded end state for paused disputes is an open design item.
+   raiser may withdraw it. By default it never expires, so the raiser can hold
+   the vault until a mutual settlement, a recovery, or a payee refund — by
+   design. Deals may opt into a bounded end state before signing
+   (`set_dispute_policy`). Agreement template v1 does not yet render the
+   chosen policy into the signed text; the on-chain field (shown on the deal
+   page and certificate) is authoritative until a template version does.
 4. **`resolution_sign` proposal races.** A changed party proposal resets party
    approvals — a malicious party can grief by re-proposing forever, but can never
    move funds without the counterparty (or the timeout). Griefing accepted.

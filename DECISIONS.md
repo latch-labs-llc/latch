@@ -52,6 +52,23 @@ integrators can see why the program behaves the way it does.
   because it only moves funds toward the payer. The deal ends Cancelled if
   nothing was released, otherwise Completed (earlier milestones stand);
   a distinct `PayeeRefunded` event records it.
+- **By default a dispute holds the funds until the parties agree.** In
+  `FromActivation` mode a raised dispute pauses the clock, and by default it
+  never expires: the funds move only by mutual settlement, the parties'
+  recovery signers, or a payee refund. The protocol does not decide disputes,
+  and an unresolved one leaves both sides worse off than settling — which is
+  the point. Parties who want a bounded end state may choose one before
+  anyone signs (`set_dispute_policy`, creator only, Draft only):
+  `ResumeRule` (anyone may lift the dispute and the signed rule resumes),
+  `Split` (the deal's split under AutoSplit, else 50/50) or `RefundPayer`,
+  after 1–365 days of dispute time. The window is cumulative across disputes
+  so repeated disputes cannot restart it. Stored in bytes carved from
+  `_reserved`; pre-existing deals read the default.
+- **Recovery consent resets at activation.** A recovery signature given while
+  a deal is only Funded is cleared when every party confirms ready, so a stale
+  pre-performance signature cannot combine with a later one to complete a
+  payout after delivery — the same reasoning as clearing cancel approvals at
+  funding.
 - **`recovery_execute` can only pay the parties** (any payer/payee split). A
   compromised recovery set can mis-split funds between the parties, never pay
   a third address.

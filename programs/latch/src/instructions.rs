@@ -9,6 +9,7 @@ pub mod refund_by_payee;
 pub mod refund_unactivated;
 pub mod release_milestone;
 pub mod resolve;
+pub mod set_dispute_policy;
 pub mod sign_terms;
 
 pub use approve_milestone::*;
@@ -22,4 +23,5 @@ pub use refund_by_payee::*;
 pub use refund_unactivated::*;
 pub use release_milestone::*;
 pub use resolve::*;
+pub use set_dispute_policy::*;
 pub use sign_terms::*;

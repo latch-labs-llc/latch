@@ -15,12 +15,18 @@ pub const BPS_DENOMINATOR: u64 = 10_000;
 /// should use LongSunset or TrueDeadlock.
 pub const MAX_TIMEOUT_SECS: i64 = 315_360_000;
 
-/// How long a fully funded deal may wait for every party to confirm ready
-/// (3 days). If it has not become Active by then, anyone may return the whole
-/// vault to the payer: without this, a counterparty who never confirms could
-/// hold the payer's deposit indefinitely, since every other exit from Funded
-/// needs that counterparty's signature.
+/// How long a deal holding the payer's deposit may wait to become Active
+/// (3 days from full funding, or from signing if only partly funded). After
+/// that anyone may return the whole vault to the payer: otherwise a
+/// counterparty who never confirms could hold the deposit indefinitely.
 #[constant]
 pub const ACTIVATION_WINDOW_SECS: i64 = 259_200;
+
+/// Bounds on the dispute window a deal may choose when it opts into a dispute
+/// policy other than NeverExpire (1–365 days of cumulative dispute time).
+#[constant]
+pub const MIN_DISPUTE_WINDOW_SECS: u32 = 86_400;
+#[constant]
+pub const MAX_DISPUTE_WINDOW_SECS: u32 = 31_536_000;
 
 pub const STATE_VERSION: u8 = 1;

@@ -43,6 +43,24 @@ pub enum TimerMode {
     FromActivation,
 }
 
+/// What an unresolved dispute in a FromActivation deal turns into. Chosen at
+/// formation. The default — the zero value, so every deal that never set one —
+/// is `NeverExpire`: a dispute holds the funds until the parties settle, their
+/// recovery signers act, or the payee refunds. The other policies apply once
+/// the deal has spent its dispute window paused (cumulative across disputes).
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, InitSpace)]
+pub enum DisputePolicy {
+    /// Disputes never expire.
+    NeverExpire,
+    /// Anyone may withdraw the expired dispute; the clock resumes and the
+    /// deal's signed rule applies when it runs out.
+    ResumeRule,
+    /// The vault splits: the deal's `split_bps` under AutoSplit, else 50/50.
+    Split,
+    /// The vault returns to the payer.
+    RefundPayer,
+}
+
 /// How a deadlock ended — carried in the DealResolved event.
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, InitSpace)]
 pub enum ResolutionPath {
@@ -50,6 +68,9 @@ pub enum ResolutionPath {
     TieBreaker,
     Timeout,
     Recovery,
+    /// A FromActivation dispute outlived its window under the Split or
+    /// RefundPayer policy.
+    DisputeExpired,
 }
 
 /// Mint risk flags (bitfield). Persisted at creation, disclosed in the creation event,
@@ -162,8 +183,17 @@ pub struct Deal {
     /// so the account layout and size are unchanged.
     pub tie_breaker_amount: u64,
 
+    // Dispute expiry (FromActivation only). Carved from the front of
+    // `_reserved` like `tie_breaker_amount`: pre-existing accounts read zeros,
+    // i.e. NeverExpire with nothing disputed yet.
+    pub dispute_policy: DisputePolicy,
+    /// Meaningful only for a policy other than NeverExpire (1–365 days).
+    pub dispute_window_secs: u32,
+    /// Seconds spent paused by disputes that have since been withdrawn.
+    pub disputed_secs: u32,
+
     /// Reserved for future use (ZK phase: per-party ElGamal keys, etc.).
-    pub _reserved: [u8; 56],
+    pub _reserved: [u8; 47],
 }
 
 impl Deal {
@@ -195,6 +225,26 @@ impl Deal {
         let seq = self.event_seq;
         self.event_seq = self.event_seq.saturating_add(1);
         seq
+    }
+
+    /// Total seconds this deal has been paused by disputes, including the one
+    /// open now. Repeated disputes share one window rather than each getting
+    /// a fresh one.
+    pub fn disputed_total(&self, now: i64) -> Result<i64> {
+        let open = if self.state == DealState::Deadlocked {
+            now.saturating_sub(self.deadlock_raised_at)
+        } else {
+            0
+        };
+        (self.disputed_secs as i64)
+            .checked_add(open)
+            .ok_or_else(|| error!(EscrowError::Overflow))
+    }
+
+    pub fn dispute_expired(&self, now: i64) -> Result<bool> {
+        Ok(self.timer_mode == TimerMode::FromActivation
+            && self.dispute_policy != DisputePolicy::NeverExpire
+            && self.disputed_total(now)? >= self.dispute_window_secs as i64)
     }
 
     pub fn require_state(&self, expected: DealState) -> Result<()> {

@@ -10,7 +10,7 @@ mod common;
 
 use anchor_lang::prelude::{Clock, Pubkey};
 use common::*;
-use latch::state::{DeadlockRule, DealState, TimerMode};
+use latch::state::{DeadlockRule, DealState, DisputePolicy, TimerMode};
 use latch::ACTIVATION_WINDOW_SECS;
 use solana_keypair::Keypair;
 use solana_signer::Signer;
@@ -62,9 +62,10 @@ enum Act {
     CancelSign,
     RefundUnactivated,
     RefundByPayee,
+    SetPolicy,
 }
 
-const ACTS: [Act; 15] = [
+const ACTS: [Act; 16] = [
     Act::Sign,
     Act::Deposit,
     Act::Ready,
@@ -80,6 +81,7 @@ const ACTS: [Act; 15] = [
     Act::CancelSign,
     Act::RefundUnactivated,
     Act::RefundByPayee,
+    Act::SetPolicy,
 ];
 
 fn terminal(s: DealState) -> bool {
@@ -96,7 +98,7 @@ fn random_sequences_preserve_invariants() {
         .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or(120);
-    let mut cov = [0u64; 15];
+    let mut cov = [0u64; 16];
     let mut ends = std::collections::BTreeMap::<String, u64>::new();
     let mut successes = 0u64;
     for seed in 1..=runs {
@@ -118,7 +120,7 @@ fn random_sequences_preserve_invariants() {
     }
 }
 
-fn run(seed: u64, cov: &mut [u64; 15], ends: &mut std::collections::BTreeMap<String, u64>) -> u64 {
+fn run(seed: u64, cov: &mut [u64; 16], ends: &mut std::collections::BTreeMap<String, u64>) -> u64 {
     let mut rng = Rng(seed);
     let carol = Keypair::new();
     let n_ms = 1 + rng.below(3) as usize;
@@ -222,6 +224,8 @@ fn run(seed: u64, cov: &mut [u64; 15], ends: &mut std::collections::BTreeMap<Str
 
     // Independent model of the FromActivation clock.
     let mut banked: i64 = 0;
+    let mut disputed: i64 = 0;
+    let mut raised_at: i64 = 0;
     let mut resumed_at: i64 = 0;
     let mut terminal_snapshot: Option<([u64; 5], DealState)> = None;
     let mut ok_txs = 0u64;
@@ -236,6 +240,10 @@ fn run(seed: u64, cov: &mut [u64; 15], ends: &mut std::collections::BTreeMap<Str
                 &mut f.svm,
                 ACTIVATION_WINDOW_SECS - 100 + rng.below(300) as i64,
             );
+        }
+        if f.deal_state().state == DealState::Deadlocked && rng.chance(15) {
+            // Let open disputes run into their windows.
+            warp(&mut f.svm, 86_400 + rng.below(86_400) as i64);
         }
         let pre = f.deal_state();
         let pre_bal = balances(&f.svm);
@@ -259,14 +267,11 @@ fn run(seed: u64, cov: &mut [u64; 15], ends: &mut std::collections::BTreeMap<Str
         let (act, mut who) = if rng.chance(70) {
             let party = if rng.chance(50) { ALICE } else { BOB };
             match pre.state {
-                DealState::Draft => (
-                    if rng.chance(97) {
-                        Act::Sign
-                    } else {
-                        Act::CancelDraft
-                    },
-                    party,
-                ),
+                DealState::Draft => match rng.below(100) {
+                    0..=44 if pre.signed == 0 => (Act::SetPolicy, ALICE),
+                    0..=96 => (Act::Sign, party),
+                    _ => (Act::CancelDraft, party),
+                },
                 DealState::Signed => match rng.below(10) {
                     0..=6 => (Act::Deposit, ALICE),
                     7..=8 => (Act::CancelSign, party),
@@ -303,7 +308,7 @@ fn run(seed: u64, cov: &mut [u64; 15], ends: &mut std::collections::BTreeMap<Str
                 },
                 DealState::Deadlocked => match rng.below(10) {
                     0..=3 => (Act::ResSign, [ALICE, BOB, CAROL][rng.below(3) as usize]),
-                    4 => (Act::Withdraw, party),
+                    4 => (Act::Withdraw, [ALICE, BOB, MALLORY][rng.below(3) as usize]),
                     5..=6 => (Act::Resolve, MALLORY),
                     7 => (Act::RecSign, [ALICE, BOB, CAROL][rng.below(3) as usize]),
                     _ => (Act::RecExec, MALLORY),
@@ -397,6 +402,20 @@ fn run(seed: u64, cov: &mut [u64; 15], ends: &mut std::collections::BTreeMap<Str
             Act::RefundByPayee => {
                 ix_refund_by_payee(&signer.pubkey(), &deal, &mint, &payer_acct, &tp)
             }
+            Act::SetPolicy => {
+                let policy = [
+                    DisputePolicy::NeverExpire,
+                    DisputePolicy::ResumeRule,
+                    DisputePolicy::Split,
+                    DisputePolicy::RefundPayer,
+                ][rng.below(4) as usize];
+                let window = match rng.below(10) {
+                    0 => 0, // invalid
+                    1..=6 => 86_400 * (1 + rng.below(2) as u32),
+                    _ => 86_400 + rng.below(365 * 86_400) as u32,
+                };
+                ix_set_dispute_policy(&signer.pubkey(), &deal, policy, window)
+            }
         };
         let res = send(&mut f.svm, &[ix], &signer.pubkey(), &[signer]);
         let post = f.deal_state();
@@ -474,6 +493,9 @@ fn run(seed: u64, cov: &mut [u64; 15], ends: &mut std::collections::BTreeMap<Str
                 }
             };
             let tb = rule == DeadlockRule::TieBreaker && pre.tie_breaker_decided;
+            let expiry_payout = act == Act::Resolve
+                && pre.state == DealState::Deadlocked
+                && timer == TimerMode::FromActivation;
             if dark == Some(ALICE) && gain_bob {
                 let ok = (act == Act::Release && threshold == 1)
                     || (act == Act::Resolve
@@ -482,6 +504,7 @@ fn run(seed: u64, cov: &mut [u64; 15], ends: &mut std::collections::BTreeMap<Str
                                 rule,
                                 DeadlockRule::TimeoutRelease | DeadlockRule::AutoSplit
                             )))
+                    || (expiry_payout && pre.dispute_policy == DisputePolicy::Split)
                     || (act == Act::RecExec && rec_without(ALICE));
                 assert!(ok, "payee gained without the dark payer: {ctx}");
             }
@@ -494,6 +517,11 @@ fn run(seed: u64, cov: &mut [u64; 15], ends: &mut std::collections::BTreeMap<Str
                                 | DeadlockRule::LongSunset
                                 | DeadlockRule::AutoSplit
                         )))
+                    || (expiry_payout
+                        && matches!(
+                            pre.dispute_policy,
+                            DisputePolicy::Split | DisputePolicy::RefundPayer
+                        ))
                     || (act == Act::RecExec && rec_without(BOB))
                     || act == Act::RefundUnactivated;
                 assert!(ok, "payer gained without the dark payee: {ctx}");
@@ -557,6 +585,70 @@ fn run(seed: u64, cov: &mut [u64; 15], ends: &mut std::collections::BTreeMap<Str
                     elapsed >= pre.timeout_secs,
                     "resolved before the active clock ran out: {ctx}"
                 );
+            }
+
+            // I10: dispute expiry follows the policy both parties signed.
+            match (pre.state, post.state) {
+                (DealState::Active, DealState::Deadlocked) => raised_at = tn,
+                (DealState::Deadlocked, DealState::Active) => disputed += tn - raised_at,
+                _ => {}
+            }
+            if !terminal(post.state) {
+                assert_eq!(
+                    post.disputed_secs as i64, disputed,
+                    "dispute time drift: {ctx}"
+                );
+            }
+            let open = if pre.state == DealState::Deadlocked {
+                tn - raised_at
+            } else {
+                0
+            };
+            let expired = pre.dispute_policy != DisputePolicy::NeverExpire
+                && disputed + open >= pre.dispute_window_secs as i64;
+            if act == Act::Withdraw
+                && pre.state == DealState::Deadlocked
+                && pre.deadlock_raised_by != keys[who].pubkey()
+            {
+                assert!(
+                    expired && pre.dispute_policy == DisputePolicy::ResumeRule,
+                    "non-raiser lifted a dispute that hadn't expired under ResumeRule: {ctx}"
+                );
+                *ends
+                    .entry("expiry: dispute lifted by non-raiser".into())
+                    .or_default() += 1;
+            }
+            let mutual = pre.proposal_active && pre.resolution_approvals == 0b11;
+            if act == Act::Resolve && pre.state == DealState::Deadlocked && !mutual {
+                assert!(
+                    expired,
+                    "dispute resolved by time before expiry / under NeverExpire: {ctx}"
+                );
+                *ends
+                    .entry(format!("expiry: payout under {:?}", pre.dispute_policy))
+                    .or_default() += 1;
+                match pre.dispute_policy {
+                    DisputePolicy::Split => {
+                        let bps = if rule == DeadlockRule::AutoSplit {
+                            pre.split_bps as u64
+                        } else {
+                            5_000
+                        };
+                        assert_eq!(
+                            post_bal[BOB] - pre_bal[BOB],
+                            pre_bal[4] * bps / 10_000,
+                            "split payout: {ctx}"
+                        );
+                    }
+                    DisputePolicy::RefundPayer => {
+                        assert_eq!(
+                            post_bal[ALICE] - pre_bal[ALICE],
+                            pre_bal[4],
+                            "refund payout: {ctx}"
+                        );
+                    }
+                    p => panic!("expiry payout under {p:?}: {ctx}"),
+                }
             }
         }
     }

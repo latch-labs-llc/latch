@@ -28,6 +28,14 @@ pub fn handle_confirm_ready(ctx: Context<ConfirmReady>) -> Result<()> {
         deal.activated_at = now;
         // FromActivation timer mode: the clock starts running now.
         deal.last_resumed_at = now;
+        // Recovery consent given before performance began does not carry
+        // into it: a stale pre-activation signature must not let the
+        // counterparty complete a recovery payout after delivery (cf. the
+        // cancel-approval reset at funding).
+        deal.recovery_proposal_active = false;
+        deal.recovery_proposed_to_payee = 0;
+        deal.recovery_approvals = 0;
+        deal.recovery_ready_at = 0;
     }
 
     let seq = deal.next_seq();

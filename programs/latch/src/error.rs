@@ -84,4 +84,12 @@ pub enum EscrowError {
     ActivationWindowOpen,
     #[msg("Only the payee may refund the payer")]
     OnlyPayeeMayRefund,
+    #[msg("Dispute window must be between 1 and 365 days")]
+    InvalidDisputeWindow,
+    #[msg("Only the deal's creator may set the dispute policy")]
+    OnlyCreatorMaySetPolicy,
+    #[msg("The dispute policy can only change before anyone signs")]
+    DisputePolicyLocked,
+    #[msg("This dispute has expired: withdraw it to resume the clock")]
+    ExpiredDisputeMustBeWithdrawn,
 }

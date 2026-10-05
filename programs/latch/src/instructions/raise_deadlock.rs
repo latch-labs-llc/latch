@@ -41,7 +41,9 @@ pub fn handle_raise_deadlock(ctx: Context<RaiseDeadlock>) -> Result<()> {
 
 /// The party who raised the deadlock can withdraw it, returning the deal to
 /// Active. In FromActivation mode the timeout clock resumes with its banked
-/// elapsed time intact. Any pending resolution proposal is discarded.
+/// elapsed time intact, and — once the deal's cumulative dispute time has
+/// reached its window under the ResumeRule policy — anyone may withdraw it.
+/// Any pending resolution proposal is discarded.
 #[event_cpi]
 #[derive(Accounts)]
 pub struct WithdrawDeadlock<'info> {
@@ -53,12 +55,18 @@ pub struct WithdrawDeadlock<'info> {
 pub fn handle_withdraw_deadlock(ctx: Context<WithdrawDeadlock>) -> Result<()> {
     let deal = &mut ctx.accounts.deal;
     deal.require_state(DealState::Deadlocked)?;
+    let now = Clock::get()?.unix_timestamp;
+    let expired_resume =
+        deal.dispute_policy == DisputePolicy::ResumeRule && deal.dispute_expired(now)?;
     require!(
-        ctx.accounts.party.key() == deal.deadlock_raised_by,
+        ctx.accounts.party.key() == deal.deadlock_raised_by || expired_resume,
         EscrowError::OnlyRaiserMayWithdraw
     );
 
-    let now = Clock::get()?.unix_timestamp;
+    if deal.timer_mode == TimerMode::FromActivation {
+        let total = deal.disputed_total(now)?;
+        deal.disputed_secs = total.clamp(0, u32::MAX as i64) as u32;
+    }
     deal.state = DealState::Active;
     deal.deadlock_raised_at = 0;
     deal.deadlock_raised_by = Pubkey::default();

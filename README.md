@@ -94,6 +94,11 @@ Signed+deposit / Funded / Active / Deadlocked ──payee refunds──▶ Cance
   cannot hold the deposit.
 - **Payee refunds:** the payee can return everything remaining to the payer
   on their own at any point before the deal ends — no dispute needed.
+- **Disputes:** in clock-from-activation deals a dispute pauses the clock and,
+  by default, holds the funds until the parties agree. Parties may instead
+  choose, before signing, what happens after 1–365 days of disputes: the
+  clock resumes under the signed rule, the funds split, or the payer is
+  refunded.
 - **Token safety:** SPL Token and Token-2022. Mints are vetted at creation —
   escrow-impossible extensions are rejected (non-transferable, default-frozen,
   active transfer hooks, unknown extensions); custody-affecting ones (freeze
@@ -108,7 +113,7 @@ Prereqs: Rust (stable), Solana CLI (Agave 4.x), Anchor 1.2.x.
 
 ```sh
 make build     # anchor build --arch v0  (required flag — see note)
-make test      # 64 LiteSVM tests (incl. a randomized state-machine fuzz): lifecycle, every failure path, all six
+make test      # 73 LiteSVM tests (incl. a randomized state-machine fuzz): lifecycle, every failure path, all six
                # rules & both timer modes, recovery, hostile Token-2022
                # mints, and real ZK proof verification
 ```
@@ -133,7 +138,7 @@ data.
 ## TypeScript SDK & CLI
 
 ```sh
-npm install @latch-labs/sdk     # typed client: all 16 instructions, events, PDAs
+npm install @latch-labs/sdk     # typed client: all 17 instructions, events, PDAs
 npm install -g @latch-labs/cli  # full-lifecycle `latch` command
 ```
 

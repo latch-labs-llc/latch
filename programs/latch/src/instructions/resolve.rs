@@ -134,14 +134,33 @@ pub fn handle_resolve(ctx: Context<Resolve>) -> Result<()> {
                     EscrowError::PayoutExceedsVault
                 );
                 (ResolutionPath::TieBreaker, deal.tie_breaker_amount)
-            } else {
-                let payee_amount = timeout_payout(deal, remaining)?;
-                // FromActivation: a raised dispute pauses the clock — no
-                // timeout resolution until the raiser withdraws.
+            } else if deal.timer_mode == TimerMode::FromActivation {
+                // A raised dispute pauses the clock. Once the deal's
+                // cumulative dispute time reaches its window, its dispute
+                // policy applies; ResumeRule goes back through withdraw.
                 require!(
-                    deal.timer_mode == TimerMode::FromDeadlock,
+                    deal.dispute_expired(now)?,
                     EscrowError::TimeoutPausedByDispute
                 );
+                let to_payee = match deal.dispute_policy {
+                    DisputePolicy::Split => {
+                        let bps = if deal.deadlock_rule == DeadlockRule::AutoSplit {
+                            deal.split_bps as u128
+                        } else {
+                            (BPS_DENOMINATOR / 2) as u128
+                        };
+                        u64::try_from((remaining as u128) * bps / (BPS_DENOMINATOR as u128))
+                            .map_err(|_| error!(EscrowError::Overflow))?
+                    }
+                    DisputePolicy::RefundPayer => 0,
+                    DisputePolicy::ResumeRule => {
+                        return err!(EscrowError::ExpiredDisputeMustBeWithdrawn)
+                    }
+                    DisputePolicy::NeverExpire => return err!(EscrowError::TimeoutPausedByDispute),
+                };
+                (ResolutionPath::DisputeExpired, to_payee)
+            } else {
+                let payee_amount = timeout_payout(deal, remaining)?;
                 let deadline = deal
                     .deadlock_raised_at
                     .checked_add(deal.timeout_secs)

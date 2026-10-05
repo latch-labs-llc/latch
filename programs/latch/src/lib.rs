@@ -85,4 +85,12 @@ pub mod latch {
     pub fn refund_by_payee(ctx: Context<RefundByPayee>) -> Result<()> {
         instructions::refund_by_payee::handle_refund_by_payee(ctx)
     }
+
+    pub fn set_dispute_policy(
+        ctx: Context<SetDisputePolicy>,
+        policy: DisputePolicy,
+        window_secs: u32,
+    ) -> Result<()> {
+        instructions::set_dispute_policy::handle_set_dispute_policy(ctx, policy, window_secs)
+    }
 }

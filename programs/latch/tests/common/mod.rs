@@ -675,6 +675,29 @@ pub fn ix_refund_by_payee_with_vault(
     )
 }
 
+pub fn ix_set_dispute_policy(
+    creator: &Pubkey,
+    deal: &Pubkey,
+    policy: DisputePolicy,
+    window_secs: u32,
+) -> Instruction {
+    Instruction::new_with_bytes(
+        latch::id(),
+        &latch::instruction::SetDisputePolicy {
+            policy,
+            window_secs,
+        }
+        .data(),
+        latch::accounts::SetDisputePolicy {
+            creator: *creator,
+            deal: *deal,
+            event_authority: event_authority(),
+            program: latch::id(),
+        }
+        .to_account_metas(None),
+    )
+}
+
 // ---------- fixture: a standard 2-party classic-SPL deal ----------
 
 pub struct Fixture {

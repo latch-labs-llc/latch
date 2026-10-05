@@ -124,6 +124,8 @@ the same way.
   therefore a different first line.
 - v1 fixes exactly two parties (buyer/seller) and one resolution rule
   section. Multi-party and arbiter-named templates are future versions.
+- v1 does not render the deal's dispute policy (`set_dispute_policy`); the
+  on-chain field is authoritative. A future template version will include it.
 
 ## 7. Transport of the subject
 

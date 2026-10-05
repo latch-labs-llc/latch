@@ -21,6 +21,22 @@ export const TimerMode = {
 } as const;
 export type TimerModeName = keyof typeof TimerMode;
 
+/**
+ * What an unresolved FromActivation dispute turns into (set before anyone
+ * signs via setDisputePolicy). Default: NeverExpire — the funds stay locked
+ * until the parties settle, recovery acts, or the payee refunds.
+ */
+export const DisputePolicy = {
+  NeverExpire: { neverExpire: {} },
+  /** After the window, anyone may lift the dispute; the signed rule resumes. */
+  ResumeRule: { resumeRule: {} },
+  /** After the window, the vault splits (the deal's split under AutoSplit, else 50/50). */
+  Split: { split: {} },
+  /** After the window, the vault returns to the payer. */
+  RefundPayer: { refundPayer: {} },
+} as const;
+export type DisputePolicyName = keyof typeof DisputePolicy;
+
 export type DealStateName =
   | "Draft"
   | "Signed"

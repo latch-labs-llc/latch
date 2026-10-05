@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::state::ResolutionPath;
+use crate::state::{DisputePolicy, ResolutionPath};
 
 // Every state change emits one event (via emit_cpi!, so indexers can't miss it in
 // truncated logs). Each carries the deal key and a per-deal monotonic `seq` so the
@@ -139,6 +139,16 @@ pub struct DealCancelled {
     pub deal: Pubkey,
     pub seq: u64,
     pub refunded_to_payer: u64,
+    pub timestamp: i64,
+}
+
+/// The creator chose a non-default dispute policy before anyone signed.
+#[event]
+pub struct DisputePolicySet {
+    pub deal: Pubkey,
+    pub seq: u64,
+    pub policy: DisputePolicy,
+    pub window_secs: u32,
     pub timestamp: i64,
 }
 

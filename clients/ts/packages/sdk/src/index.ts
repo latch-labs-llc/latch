@@ -24,7 +24,7 @@ import {
   TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,
 } from "./pdas";
-import { DeadlockRule, TimerMode, RiskFlags, dealStateName } from "./enums";
+import { DeadlockRule, DisputePolicy, TimerMode, RiskFlags, dealStateName } from "./enums";
 
 export * from "./pdas";
 export * from "./enums";
@@ -283,6 +283,22 @@ export class LatchClient {
       payerTokenAccount,
       tokenProgram: d.account.tokenProgram,
     } as any);
+  }
+
+  /**
+   * Choose what an unresolved FromActivation dispute turns into, and after how
+   * much cumulative dispute time (1–365 days). Creator only, in Draft, before
+   * anyone signs — usually appended to the createDeal transaction.
+   */
+  setDisputePolicy(
+    deal: PublicKey,
+    policy: (typeof DisputePolicy)[keyof typeof DisputePolicy],
+    windowSecs: number,
+    creator?: PublicKey
+  ) {
+    return this.program.methods
+      .setDisputePolicy(policy as any, windowSecs)
+      .accounts({ creator: this.signer(creator), deal } as any);
   }
 
   /**

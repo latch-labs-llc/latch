@@ -194,3 +194,29 @@ fn recovery_works_from_deadlock() {
     assert_eq!(token_balance(&f.svm, &f.bob_ata), 1000);
     assert_eq!(f.deal_state().state, DealState::Completed);
 }
+
+#[test]
+fn recovery_consent_given_before_activation_does_not_survive_it() {
+    // Recovery set = both parties, 2-of-2, no notice delay.
+    let mut f = Fixture::new(vec![1000], |p| {
+        p.recovery_signers = vec![p.parties[0], p.parties[1]];
+        p.recovery_threshold = 2;
+        p.recovery_delay_secs = 0;
+    });
+    f.sign_all();
+    f.fund();
+    // While merely Funded, the payee signs a full refund to the payer...
+    let ix = ix_recovery_sign(&f.bob.pubkey(), &f.deal, 0);
+    send(&mut f.svm, &[ix], &f.bob.pubkey(), &[&f.bob]).unwrap();
+    // ...the deal then activates (performance begins)...
+    f.activate();
+    assert!(!f.deal_state().recovery_proposal_active);
+    // ...so the payer's later countersignature alone cannot execute it.
+    let ix = ix_recovery_sign(&f.alice.pubkey(), &f.deal, 0);
+    send(&mut f.svm, &[ix], &f.alice.pubkey(), &[&f.alice]).unwrap();
+    let ix = ix_recovery_execute(&f.deal, &f.mint, &f.alice_ata, &f.bob_ata, &f.token_program);
+    assert_err(
+        send(&mut f.svm, &[ix], &f.alice.pubkey(), &[&f.alice]),
+        "InsufficientRecoverySignatures",
+    );
+}

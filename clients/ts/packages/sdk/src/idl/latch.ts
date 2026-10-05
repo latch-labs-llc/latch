@@ -718,6 +718,49 @@ export type Latch = {
       "args": []
     },
     {
+      "name": "setDisputePolicy",
+      "discriminator": [
+        202,
+        183,
+        36,
+        210,
+        40,
+        30,
+        178,
+        58
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "signer": true
+        },
+        {
+          "name": "deal",
+          "writable": true
+        },
+        {
+          "name": "eventAuthority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "policy",
+          "type": {
+            "defined": {
+              "name": "disputePolicy"
+            }
+          }
+        },
+        {
+          "name": "windowSecs",
+          "type": "u32"
+        }
+      ]
+    },
+    {
       "name": "signTerms",
       "discriminator": [
         226,
@@ -901,6 +944,19 @@ export type Latch = {
         32,
         185,
         118
+      ]
+    },
+    {
+      "name": "disputePolicySet",
+      "discriminator": [
+        216,
+        255,
+        106,
+        101,
+        13,
+        177,
+        149,
+        84
       ]
     },
     {
@@ -1200,6 +1256,26 @@ export type Latch = {
       "code": 6040,
       "name": "onlyPayeeMayRefund",
       "msg": "Only the payee may refund the payer"
+    },
+    {
+      "code": 6041,
+      "name": "invalidDisputeWindow",
+      "msg": "Dispute window must be between 1 and 365 days"
+    },
+    {
+      "code": 6042,
+      "name": "onlyCreatorMaySetPolicy",
+      "msg": "Only the deal's creator may set the dispute policy"
+    },
+    {
+      "code": 6043,
+      "name": "disputePolicyLocked",
+      "msg": "The dispute policy can only change before anyone signs"
+    },
+    {
+      "code": 6044,
+      "name": "expiredDisputeMustBeWithdrawn",
+      "msg": "This dispute has expired: withdraw it to resume the clock"
     }
   ],
   "types": [
@@ -1733,6 +1809,28 @@ export type Latch = {
             "type": "u64"
           },
           {
+            "name": "disputePolicy",
+            "type": {
+              "defined": {
+                "name": "disputePolicy"
+              }
+            }
+          },
+          {
+            "name": "disputeWindowSecs",
+            "docs": [
+              "Meaningful only for a policy other than NeverExpire (1–365 days)."
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "disputedSecs",
+            "docs": [
+              "Seconds spent paused by disputes that have since been withdrawn."
+            ],
+            "type": "u32"
+          },
+          {
             "name": "reserved",
             "docs": [
               "Reserved for future use (ZK phase: per-party ElGamal keys, etc.)."
@@ -1740,7 +1838,7 @@ export type Latch = {
             "type": {
               "array": [
                 "u8",
-                56
+                47
               ]
             }
           }
@@ -1921,6 +2019,68 @@ export type Latch = {
           {
             "name": "fullyFunded",
             "type": "bool"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "disputePolicy",
+      "docs": [
+        "What an unresolved dispute in a FromActivation deal turns into. Chosen at",
+        "formation. The default — the zero value, so every deal that never set one —",
+        "is `NeverExpire`: a dispute holds the funds until the parties settle, their",
+        "recovery signers act, or the payee refunds. The other policies apply once",
+        "the deal has spent its dispute window paused (cumulative across disputes)."
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "neverExpire"
+          },
+          {
+            "name": "resumeRule"
+          },
+          {
+            "name": "split"
+          },
+          {
+            "name": "refundPayer"
+          }
+        ]
+      }
+    },
+    {
+      "name": "disputePolicySet",
+      "docs": [
+        "The creator chose a non-default dispute policy before anyone signed."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "deal",
+            "type": "pubkey"
+          },
+          {
+            "name": "seq",
+            "type": "u64"
+          },
+          {
+            "name": "policy",
+            "type": {
+              "defined": {
+                "name": "disputePolicy"
+              }
+            }
+          },
+          {
+            "name": "windowSecs",
+            "type": "u32"
           },
           {
             "name": "timestamp",
@@ -2142,6 +2302,9 @@ export type Latch = {
           },
           {
             "name": "recovery"
+          },
+          {
+            "name": "disputeExpired"
           }
         ]
       }
@@ -2241,11 +2404,10 @@ export type Latch = {
     {
       "name": "activationWindowSecs",
       "docs": [
-        "How long a fully funded deal may wait for every party to confirm ready",
-        "(3 days). If it has not become Active by then, anyone may return the whole",
-        "vault to the payer: without this, a counterparty who never confirms could",
-        "hold the payer's deposit indefinitely, since every other exit from Funded",
-        "needs that counterparty's signature."
+        "How long a deal holding the payer's deposit may wait to become Active",
+        "(3 days from full funding, or from signing if only partly funded). After",
+        "that anyone may return the whole vault to the payer: otherwise a",
+        "counterparty who never confirms could hold the deposit indefinitely."
       ],
       "type": "i64",
       "value": "259200"
@@ -2254,6 +2416,20 @@ export type Latch = {
       "name": "dealSeed",
       "type": "bytes",
       "value": "[100, 101, 97, 108]"
+    },
+    {
+      "name": "maxDisputeWindowSecs",
+      "type": "u32",
+      "value": "31536000"
+    },
+    {
+      "name": "minDisputeWindowSecs",
+      "docs": [
+        "Bounds on the dispute window a deal may choose when it opts into a dispute",
+        "policy other than NeverExpire (1–365 days of cumulative dispute time)."
+      ],
+      "type": "u32",
+      "value": "86400"
     }
   ]
 };
