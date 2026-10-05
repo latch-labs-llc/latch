@@ -14,10 +14,30 @@ integrators can see why the program behaves the way it does.
   the resolution rule, or the recovery set for that deal.
 - **No fees, no token, no staking in this program.** Any commercial layer
   belongs outside the open-source protocol.
-- **`release_milestone`, `resolve`, and `recovery_execute` are permissionless
-  cranks** — once on-chain conditions are met, anyone can execute the outcome.
-  The maintainers are never required in the flow of funds, and a timeout
-  outcome cannot be blocked by any party going dark.
+- **`release_milestone`, `resolve`, `recovery_execute`, and
+  `refund_unactivated` are permissionless cranks** — once on-chain conditions
+  are met, anyone can submit the outcome; no one can redirect it. The
+  maintainers are never required in the flow of funds, and a timeout outcome
+  cannot be blocked by any party going dark.
+- **A funded deal that never activates returns to the payer after 3 days.**
+  Every other exit from Funded (mutual cancel, recovery under a parties-only
+  recovery set) needs the counterparty, so a counterparty who never calls
+  `confirm_ready` could otherwise hold the deposit indefinitely — and use that
+  as leverage over a recovery split. `refund_unactivated` lets anyone return
+  the whole vault to the payer once `funded_at + ACTIVATION_WINDOW_SECS`
+  (259,200 s, inclusive) has passed with the deal still not Active.
+  - *A program constant, not a per-deal parameter:* confirming ready takes
+    one transaction, so three days is generous for any counterparty that
+    intends to perform; a constant keeps `create_deal` and every client
+    unchanged and is one fewer formation parameter to get wrong.
+  - *No exemption when some parties have confirmed:* until every party
+    confirms, performance has not begun and the clock has not started, so
+    returning the deposit costs no one anything they were owed.
+  - *Distinct `ActivationLapsed` event* (not `DealCancelled`), so the record
+    shows the refund happened by lapse rather than by mutual consent.
+  - *Applies to deals funded before this instruction shipped* (devnet only):
+    it adds an exit that returns funds to their depositor and changes no
+    frozen parameter.
 - **`recovery_execute` can only pay the parties** (any payer/payee split). A
   compromised recovery set can mis-split funds between the parties, never pay
   a third address.

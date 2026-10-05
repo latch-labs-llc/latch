@@ -141,3 +141,15 @@ pub struct DealCancelled {
     pub refunded_to_payer: u64,
     pub timestamp: i64,
 }
+
+/// A funded deal never became Active within the activation window, so the
+/// deposit was returned to the payer. Distinct from `DealCancelled` so the
+/// record shows the refund happened by lapse, not by mutual consent.
+#[event]
+pub struct ActivationLapsed {
+    pub deal: Pubkey,
+    pub seq: u64,
+    pub refunded_to_payer: u64,
+    pub funded_at: i64,
+    pub timestamp: i64,
+}

@@ -464,6 +464,59 @@
       ]
     },
     {
+      "name": "refund_unactivated",
+      "discriminator": [
+        77,
+        80,
+        6,
+        249,
+        39,
+        198,
+        33,
+        102
+      ],
+      "accounts": [
+        {
+          "name": "cranker",
+          "signer": true
+        },
+        {
+          "name": "deal",
+          "writable": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "payer_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "release_milestone",
       "discriminator": [
         56,
@@ -687,6 +740,19 @@
     }
   ],
   "events": [
+    {
+      "name": "ActivationLapsed",
+      "discriminator": [
+        97,
+        227,
+        102,
+        255,
+        29,
+        12,
+        220,
+        238
+      ]
+    },
     {
       "name": "CancelSigned",
       "discriminator": [
@@ -1052,9 +1118,47 @@
       "code": 6038,
       "name": "Overflow",
       "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6039,
+      "name": "ActivationWindowOpen",
+      "msg": "Activation window has not lapsed"
     }
   ],
   "types": [
+    {
+      "name": "ActivationLapsed",
+      "docs": [
+        "A funded deal never became Active within the activation window, so the",
+        "deposit was returned to the payer. Distinct from `DealCancelled` so the",
+        "record shows the refund happened by lapse, not by mutual consent."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "deal",
+            "type": "pubkey"
+          },
+          {
+            "name": "seq",
+            "type": "u64"
+          },
+          {
+            "name": "refunded_to_payer",
+            "type": "u64"
+          },
+          {
+            "name": "funded_at",
+            "type": "i64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
     {
       "name": "CancelSigned",
       "type": {
@@ -2026,6 +2130,18 @@
     }
   ],
   "constants": [
+    {
+      "name": "ACTIVATION_WINDOW_SECS",
+      "docs": [
+        "How long a fully funded deal may wait for every party to confirm ready",
+        "(3 days). If it has not become Active by then, anyone may return the whole",
+        "vault to the payer: without this, a counterparty who never confirms could",
+        "hold the payer's deposit indefinitely, since every other exit from Funded",
+        "needs that counterparty's signature."
+      ],
+      "type": "i64",
+      "value": "259200"
+    },
     {
       "name": "DEAL_SEED",
       "type": "bytes",

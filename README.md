@@ -57,7 +57,7 @@ Latch is the open, non-custodial primitive for that: a structured approval
 workflow over a vault, designed so the operator of any product built on it
 never holds or controls user funds. There is no server and nothing to host —
 the program runs on Solana itself, every release and resolution is a
-permissionless crank anyone can execute, and the web app is an optional,
+permissionless crank — anyone can submit it, no one can redirect it — and the web app is an optional,
 forkable static page. Every deal settles even if Latch Labs vanishes.
 
 ## How it works
@@ -69,6 +69,8 @@ Draft ──all parties sign terms hash──▶ Signed ──deposit──▶ F
                                                         Completed ◀── final release
                                                             ▲
                               Deadlocked ──rule / mutual sign-off / recovery──────┘
+
+Funded ──not Active 3 days after funding──▶ Cancelled  (whole vault refunded to the payer; anyone may crank)
 ```
 
 - **Parties & thresholds:** up to 8 parties, M-of-N milestone approvals,
@@ -81,8 +83,12 @@ Draft ──all parties sign terms hash──▶ Signed ──deposit──▶ F
 - **Recovery:** a party-chosen M-of-N signer set for key loss, incapacity, or
   court orders — payouts can only go to the parties, and only after a per-deal
   on-chain notice delay.
-- **Permissionless cranks:** once conditions are met, anyone can execute a
-  release or resolution. No operator sits in the flow of funds.
+- **Permissionless cranks:** once conditions are met, anyone can submit a
+  release, resolution, or lapsed-activation refund; no one can redirect it.
+  No operator sits in the flow of funds.
+- **No stranded deposits:** a funded deal that is not Active 3 days after
+  funding returns the whole vault to the payer, so a counterparty who never
+  confirms ready cannot hold the deposit.
 - **Token safety:** SPL Token and Token-2022. Mints are vetted at creation —
   escrow-impossible extensions are rejected (non-transferable, default-frozen,
   active transfer hooks, unknown extensions); custody-affecting ones (freeze
@@ -97,7 +103,7 @@ Prereqs: Rust (stable), Solana CLI (Agave 4.x), Anchor 1.2.x.
 
 ```sh
 make build     # anchor build --arch v0  (required flag — see note)
-make test      # 45 LiteSVM tests: lifecycle, every failure path, all six
+make test      # 53 LiteSVM tests: lifecycle, every failure path, all six
                # rules & both timer modes, recovery, hostile Token-2022
                # mints, and real ZK proof verification
 ```
@@ -122,7 +128,7 @@ data.
 ## TypeScript SDK & CLI
 
 ```sh
-npm install @latch-labs/sdk     # typed client: all 14 instructions, events, PDAs
+npm install @latch-labs/sdk     # typed client: all 15 instructions, events, PDAs
 npm install -g @latch-labs/cli  # full-lifecycle `latch` command
 ```
 

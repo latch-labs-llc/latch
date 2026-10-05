@@ -77,4 +77,8 @@ pub mod latch {
     pub fn cancel_sign(ctx: Context<CancelSign>) -> Result<()> {
         instructions::cancel::handle_cancel_sign(ctx)
     }
+
+    pub fn refund_unactivated(ctx: Context<RefundUnactivated>) -> Result<()> {
+        instructions::refund_unactivated::handle_refund_unactivated(ctx)
+    }
 }

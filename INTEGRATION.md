@@ -5,7 +5,7 @@ Three surfaces, one primitive — pick the layer that fits:
 | You are building… | Use | Docs |
 | --- | --- | --- |
 | A store / marketplace checkout | [`@latch-labs/checkout`](clients/ts/packages/checkout/README.md) | Sessions, adapters, order events |
-| Anything else on the protocol | [`@latch-labs/sdk`](clients/ts/packages/sdk/README.md) | All 14 instructions, events, PDAs — [API reference](https://latchlabs.org/api/) |
+| Anything else on the protocol | [`@latch-labs/sdk`](clients/ts/packages/sdk/README.md) | All 15 instructions, events, PDAs — [API reference](https://latchlabs.org/api/) |
 | Scripts / ops | [`@latch-labs/cli`](clients/ts/packages/cli/README.md) | Full lifecycle from a terminal |
 
 ## Escrow checkout in ten lines

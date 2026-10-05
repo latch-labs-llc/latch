@@ -24,7 +24,7 @@ Rust (stable), Agave 4.x CLI, Anchor 1.2.x, Node 22+.
 ```sh
 make build     # REQUIRED path: anchor build --arch v0 (SBPF v3 is rejected
                # by devnet deploys and LiteSVM — plain `anchor build` breaks)
-make test      # 45 LiteSVM tests
+make test      # 53 LiteSVM tests
 ./scripts/e2e-local.sh   # full SDK + checkout lifecycle on a local validator
                          # (build clients/ts first: npm ci && npm run build)
 ```

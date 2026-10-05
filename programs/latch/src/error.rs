@@ -80,4 +80,6 @@ pub enum EscrowError {
     RecoveryDelayNotElapsed,
     #[msg("Arithmetic overflow")]
     Overflow,
+    #[msg("Activation window has not lapsed")]
+    ActivationWindowOpen,
 }

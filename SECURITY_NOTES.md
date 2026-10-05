@@ -9,12 +9,19 @@ cancel of the funded deal unilaterally, commit `edd7f2d`); `timeout_secs` is
 capped at 10 years (an effectively-infinite timeout bypassed TrueDeadlock's
 explicit-consent requirement, same commit); and the tie-breaker's ruling is
 stored apart from party proposals so it can no longer be erased by
-counter-proposing (commit `46b7879`). The notes below reflect the
-post-fix behavior.
+counter-proposing (commit `46b7879`). A follow-up review (2026-10-05) found
+that a funded deal had no exit the payer could reach alone: if the
+counterparty never confirmed ready, the deposit stayed locked, since mutual
+cancel and a parties-only recovery set both need that counterparty. Fixed by
+`refund_unactivated` (anyone may return the vault to the payer 3 days after
+funding if the deal never became Active), with regression tests in
+`tests/test_refund_unactivated.rs`. The notes below reflect the post-fix
+behavior.
 
 ## Program-level
 
-1. **Permissionless cranks (`release_milestone`, `resolve`, `recovery_execute`).**
+1. **Permissionless cranks (`release_milestone`, `resolve`, `recovery_execute`,
+   `refund_unactivated`).**
    Intended design. Audit focus: no path where a cranker can influence *where*
    funds go — destinations are constrained to the recorded payer/payee owners'
    token accounts. Note: constraints check the token account's `owner` field, so a

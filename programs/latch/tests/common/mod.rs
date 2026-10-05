@@ -591,6 +591,48 @@ pub fn ix_cancel_sign(
     )
 }
 
+pub fn ix_refund_unactivated(
+    cranker: &Pubkey,
+    deal: &Pubkey,
+    mint: &Pubkey,
+    payer_token_account: &Pubkey,
+    token_program: &Pubkey,
+) -> Instruction {
+    ix_refund_unactivated_with_vault(
+        cranker,
+        deal,
+        mint,
+        &vault_ata(deal, mint, token_program),
+        payer_token_account,
+        token_program,
+    )
+}
+
+pub fn ix_refund_unactivated_with_vault(
+    cranker: &Pubkey,
+    deal: &Pubkey,
+    mint: &Pubkey,
+    vault: &Pubkey,
+    payer_token_account: &Pubkey,
+    token_program: &Pubkey,
+) -> Instruction {
+    Instruction::new_with_bytes(
+        latch::id(),
+        &latch::instruction::RefundUnactivated {}.data(),
+        latch::accounts::RefundUnactivated {
+            cranker: *cranker,
+            deal: *deal,
+            mint: *mint,
+            vault: *vault,
+            payer_token_account: *payer_token_account,
+            token_program: *token_program,
+            event_authority: event_authority(),
+            program: latch::id(),
+        }
+        .to_account_metas(None),
+    )
+}
+
 // ---------- fixture: a standard 2-party classic-SPL deal ----------
 
 pub struct Fixture {

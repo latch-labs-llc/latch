@@ -33,6 +33,10 @@ export { BN };
 export type { Latch };
 export const IDL = idlJson as Latch;
 export const LATCH_PROGRAM_ID = new PublicKey((idlJson as any).address);
+/** Seconds a funded deal may wait for every party to confirm ready (from the IDL). */
+export const ACTIVATION_WINDOW_SECS = Number(
+  (idlJson as any).constants.find((c: any) => c.name === "ACTIVATION_WINDOW_SECS").value
+);
 
 /** Parameters for {@link LatchClient.createDeal}. Amounts are raw base units. */
 export interface CreateDealArgs {
@@ -255,6 +259,23 @@ export class LatchClient {
     const d = await this.fetchDeal(deal);
     return this.program.methods.cancelSign().accounts({
       party: this.signer(party),
+      deal,
+      mint: d.account.mint,
+      vault: d.vault,
+      payerTokenAccount,
+      tokenProgram: d.account.tokenProgram,
+    } as any);
+  }
+
+  /**
+   * Return the whole vault to the payer once a funded deal has gone
+   * `ACTIVATION_WINDOW_SECS` (3 days) without becoming Active. Permissionless:
+   * any wallet may submit it; the payout can only reach the payer.
+   */
+  async refundUnactivated(deal: PublicKey, payerTokenAccount: PublicKey, cranker?: PublicKey) {
+    const d = await this.fetchDeal(deal);
+    return this.program.methods.refundUnactivated().accounts({
+      cranker: this.signer(cranker),
       deal,
       mint: d.account.mint,
       vault: d.vault,

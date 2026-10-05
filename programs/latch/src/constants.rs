@@ -15,4 +15,12 @@ pub const BPS_DENOMINATOR: u64 = 10_000;
 /// should use LongSunset or TrueDeadlock.
 pub const MAX_TIMEOUT_SECS: i64 = 315_360_000;
 
+/// How long a fully funded deal may wait for every party to confirm ready
+/// (3 days). If it has not become Active by then, anyone may return the whole
+/// vault to the payer: without this, a counterparty who never confirms could
+/// hold the payer's deposit indefinitely, since every other exit from Funded
+/// needs that counterparty's signature.
+#[constant]
+pub const ACTIVATION_WINDOW_SECS: i64 = 259_200;
+
 pub const STATE_VERSION: u8 = 1;

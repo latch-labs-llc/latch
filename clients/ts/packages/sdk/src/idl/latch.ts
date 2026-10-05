@@ -470,6 +470,59 @@ export type Latch = {
       ]
     },
     {
+      "name": "refundUnactivated",
+      "discriminator": [
+        77,
+        80,
+        6,
+        249,
+        39,
+        198,
+        33,
+        102
+      ],
+      "accounts": [
+        {
+          "name": "cranker",
+          "signer": true
+        },
+        {
+          "name": "deal",
+          "writable": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "payerTokenAccount",
+          "writable": true
+        },
+        {
+          "name": "tokenProgram",
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "eventAuthority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "releaseMilestone",
       "discriminator": [
         56,
@@ -693,6 +746,19 @@ export type Latch = {
     }
   ],
   "events": [
+    {
+      "name": "activationLapsed",
+      "discriminator": [
+        97,
+        227,
+        102,
+        255,
+        29,
+        12,
+        220,
+        238
+      ]
+    },
     {
       "name": "cancelSigned",
       "discriminator": [
@@ -1058,9 +1124,47 @@ export type Latch = {
       "code": 6038,
       "name": "overflow",
       "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6039,
+      "name": "activationWindowOpen",
+      "msg": "Activation window has not lapsed"
     }
   ],
   "types": [
+    {
+      "name": "activationLapsed",
+      "docs": [
+        "A funded deal never became Active within the activation window, so the",
+        "deposit was returned to the payer. Distinct from `DealCancelled` so the",
+        "record shows the refund happened by lapse, not by mutual consent."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "deal",
+            "type": "pubkey"
+          },
+          {
+            "name": "seq",
+            "type": "u64"
+          },
+          {
+            "name": "refundedToPayer",
+            "type": "u64"
+          },
+          {
+            "name": "fundedAt",
+            "type": "i64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
     {
       "name": "cancelSigned",
       "type": {
@@ -2032,6 +2136,18 @@ export type Latch = {
     }
   ],
   "constants": [
+    {
+      "name": "activationWindowSecs",
+      "docs": [
+        "How long a fully funded deal may wait for every party to confirm ready",
+        "(3 days). If it has not become Active by then, anyone may return the whole",
+        "vault to the payer: without this, a counterparty who never confirms could",
+        "hold the payer's deposit indefinitely, since every other exit from Funded",
+        "needs that counterparty's signature."
+      ],
+      "type": "i64",
+      "value": "259200"
+    },
     {
       "name": "dealSeed",
       "type": "bytes",
