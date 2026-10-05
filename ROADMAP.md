@@ -7,7 +7,7 @@ points into most of these.
 ## Shipped (devnet)
 
 - Anchor program: 17 instructions, six resolution rules, two timer modes,
-  party-chosen recovery, Token-2022 vetting, CPI events — 73 LiteSVM tests,
+  party-chosen recovery, Token-2022 vetting, CPI events — 75 LiteSVM tests,
   verified reproducible build.
 - `@latch-labs/sdk` + `@latch-labs/cli` + `@latch-labs/checkout` on npm;
   local-validator and devnet E2E suites in CI.

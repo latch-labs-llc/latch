@@ -46,8 +46,9 @@ below reflect the post-fix behavior.
    In `FromActivation` mode a raised dispute pauses the clock and only the
    raiser may withdraw it. By default it never expires, so the raiser can hold
    the vault until a mutual settlement, a recovery, or a payee refund — by
-   design. Deals may opt into a bounded end state before signing
-   (`set_dispute_policy`). Agreement template v1 does not yet render the
+   design. Deals may opt into a bounded end state, set only in the
+   transaction that creates the deal (`set_dispute_policy`), so it can never
+   change between a counterparty viewing the deal and signing it. Agreement template v1 does not yet render the
    chosen policy into the signed text; the on-chain field (shown on the deal
    page and certificate) is authoritative until a template version does.
 4. **`resolution_sign` proposal races.** A changed party proposal resets party

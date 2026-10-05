@@ -287,8 +287,10 @@ export class LatchClient {
 
   /**
    * Choose what an unresolved FromActivation dispute turns into, and after how
-   * much cumulative dispute time (1–365 days). Creator only, in Draft, before
-   * anyone signs — usually appended to the createDeal transaction.
+   * much cumulative dispute time (1–365 days). The program accepts it ONLY in
+   * the same transaction as the deal's createDeal, from the creator — append
+   * it: `createDeal(args).postInstructions([await setDisputePolicy(...).instruction()])`.
+   * A separate, later transaction fails with PolicyMustBeSetAtCreation.
    */
   setDisputePolicy(
     deal: PublicKey,

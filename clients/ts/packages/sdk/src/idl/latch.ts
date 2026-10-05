@@ -739,6 +739,13 @@ export type Latch = {
           "writable": true
         },
         {
+          "name": "instructions",
+          "docs": [
+            "checked loaders."
+          ],
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
           "name": "eventAuthority"
         },
         {
@@ -1276,6 +1283,11 @@ export type Latch = {
       "code": 6044,
       "name": "expiredDisputeMustBeWithdrawn",
       "msg": "This dispute has expired: withdraw it to resume the clock"
+    },
+    {
+      "code": 6045,
+      "name": "policyMustBeSetAtCreation",
+      "msg": "The dispute policy must be set in the same transaction that creates the deal"
     }
   ],
   "types": [

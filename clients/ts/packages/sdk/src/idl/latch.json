@@ -733,6 +733,13 @@
           "writable": true
         },
         {
+          "name": "instructions",
+          "docs": [
+            "checked loaders."
+          ],
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
           "name": "event_authority"
         },
         {
@@ -1270,6 +1277,11 @@
       "code": 6044,
       "name": "ExpiredDisputeMustBeWithdrawn",
       "msg": "This dispute has expired: withdraw it to resume the clock"
+    },
+    {
+      "code": 6045,
+      "name": "PolicyMustBeSetAtCreation",
+      "msg": "The dispute policy must be set in the same transaction that creates the deal"
     }
   ],
   "types": [

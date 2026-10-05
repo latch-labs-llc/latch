@@ -691,6 +691,7 @@ pub fn ix_set_dispute_policy(
         latch::accounts::SetDisputePolicy {
             creator: *creator,
             deal: *deal,
+            instructions: solana_instructions_sysvar::ID,
             event_authority: event_authority(),
             program: latch::id(),
         }
@@ -714,6 +715,16 @@ pub struct Fixture {
 impl Fixture {
     /// Create a deal in Draft with the given params-modifier applied.
     pub fn new(milestones: Vec<u64>, tweak: impl FnOnce(&mut CreateDealParams)) -> Self {
+        Self::new_with_policy(milestones, tweak, None)
+    }
+
+    /// As `new`, with an optional dispute policy set in the SAME transaction
+    /// as `create_deal` (the only way the program accepts one).
+    pub fn new_with_policy(
+        milestones: Vec<u64>,
+        tweak: impl FnOnce(&mut CreateDealParams),
+        policy: Option<(DisputePolicy, u32)>,
+    ) -> Self {
         let (mut svm, alice, bob) = setup();
         let tp = classic_token_id();
         let mint = create_mint(&mut svm, &alice, &alice.pubkey(), None, &tp);
@@ -733,13 +744,11 @@ impl Fixture {
         let mut params = default_params(&alice.pubkey(), &bob.pubkey(), milestones);
         tweak(&mut params);
         let deal = deal_pda(&alice.pubkey(), params.deal_id);
-        send(
-            &mut svm,
-            &[ix_create_deal(&alice.pubkey(), &mint, &tp, params)],
-            &alice.pubkey(),
-            &[&alice],
-        )
-        .unwrap();
+        let mut ixs = vec![ix_create_deal(&alice.pubkey(), &mint, &tp, params)];
+        if let Some((p, window)) = policy {
+            ixs.push(ix_set_dispute_policy(&alice.pubkey(), &deal, p, window));
+        }
+        send(&mut svm, &ixs, &alice.pubkey(), &[&alice]).unwrap();
 
         Fixture {
             svm,

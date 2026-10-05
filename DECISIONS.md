@@ -64,6 +64,12 @@ integrators can see why the program behaves the way it does.
   after 1–365 days of dispute time. The window is cumulative across disputes
   so repeated disputes cannot restart it. Stored in bytes carved from
   `_reserved`; pre-existing deals read the default.
+  - *Only in the creating transaction.* `set_dispute_policy` must run in the
+    same transaction as the deal's `create_deal` (checked through the
+    instructions sysvar), with nothing else having touched the deal. No one
+    can see a deal before its creating transaction lands, so the policy a
+    counterparty reviews is always the one they sign — it can never be
+    switched between viewing and signing.
 - **Recovery consent resets at activation.** A recovery signature given while
   a deal is only Funded is cleared when every party confirms ready, so a stale
   pre-performance signature cannot combine with a later one to complete a

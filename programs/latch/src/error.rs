@@ -92,4 +92,6 @@ pub enum EscrowError {
     DisputePolicyLocked,
     #[msg("This dispute has expired: withdraw it to resume the clock")]
     ExpiredDisputeMustBeWithdrawn,
+    #[msg("The dispute policy must be set in the same transaction that creates the deal")]
+    PolicyMustBeSetAtCreation,
 }

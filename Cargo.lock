@@ -2323,6 +2323,7 @@ dependencies = [
  "log",
  "serde_json",
  "solana-account",
+ "solana-instructions-sysvar",
  "solana-keypair",
  "solana-message",
  "solana-rpc-client",

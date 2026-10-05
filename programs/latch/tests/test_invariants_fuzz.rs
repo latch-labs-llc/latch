@@ -116,7 +116,11 @@ fn random_sequences_preserve_invariants() {
     // Guard against a harness that silently stops exercising paths.
     assert!(successes > runs * 8, "too few successful txs: {successes}");
     for (i, a) in ACTS.iter().enumerate() {
-        assert!(cov[i] > 0, "{a:?} never succeeded — coverage gap");
+        // SetPolicy after creation must never succeed (I11), so it is
+        // attempted for its failures only.
+        if *a != Act::SetPolicy {
+            assert!(cov[i] > 0, "{a:?} never succeeded — coverage gap");
+        }
     }
 }
 
@@ -149,30 +153,47 @@ fn run(seed: u64, cov: &mut [u64; 16], ends: &mut std::collections::BTreeMap<Str
         Recovery::CarolOnly,
     ][rng.below(3) as usize];
     let rec_delay = rng.below(300) as i64;
+    // A dispute policy can only be chosen in the creating transaction.
+    let initial_policy = if timer == TimerMode::FromActivation && rng.chance(60) {
+        let p = [
+            DisputePolicy::NeverExpire,
+            DisputePolicy::ResumeRule,
+            DisputePolicy::Split,
+            DisputePolicy::RefundPayer,
+        ][rng.below(4) as usize];
+        Some((p, 86_400 * (1 + rng.below(2) as u32)))
+    } else {
+        None
+    };
     let carol_pk = carol.pubkey();
 
-    let mut f = Fixture::new(milestones.clone(), |p| {
-        p.deadlock_rule = rule;
-        p.timer_mode = timer;
-        p.timeout_secs = if matches!(rule, DeadlockRule::TieBreaker | DeadlockRule::TrueDeadlock) {
-            0
-        } else {
-            timeout
-        };
-        p.split_bps = split;
-        if rule == DeadlockRule::TieBreaker {
-            p.tie_breaker = carol_pk;
-        }
-        p.approval_threshold = threshold;
-        let (signers, th) = match recovery {
-            Recovery::PartiesBoth => (vec![p.parties[0], p.parties[1]], 2),
-            Recovery::WithCarol => (vec![p.parties[0], p.parties[1], carol_pk], 2),
-            Recovery::CarolOnly => (vec![carol_pk], 1),
-        };
-        p.recovery_signers = signers;
-        p.recovery_threshold = th;
-        p.recovery_delay_secs = rec_delay;
-    });
+    let mut f = Fixture::new_with_policy(
+        milestones.clone(),
+        |p| {
+            p.deadlock_rule = rule;
+            p.timer_mode = timer;
+            p.timeout_secs =
+                if matches!(rule, DeadlockRule::TieBreaker | DeadlockRule::TrueDeadlock) {
+                    0
+                } else {
+                    timeout
+                };
+            p.split_bps = split;
+            if rule == DeadlockRule::TieBreaker {
+                p.tie_breaker = carol_pk;
+            }
+            p.approval_threshold = threshold;
+            let (signers, th) = match recovery {
+                Recovery::PartiesBoth => (vec![p.parties[0], p.parties[1]], 2),
+                Recovery::WithCarol => (vec![p.parties[0], p.parties[1], carol_pk], 2),
+                Recovery::CarolOnly => (vec![carol_pk], 1),
+            };
+            p.recovery_signers = signers;
+            p.recovery_threshold = th;
+            p.recovery_delay_secs = rec_delay;
+        },
+        initial_policy,
+    );
 
     let mallory = Keypair::new();
     f.svm.airdrop(&carol.pubkey(), 10 * SOL).unwrap();
@@ -546,6 +567,13 @@ fn run(seed: u64, cov: &mut [u64; 16], ends: &mut std::collections::BTreeMap<Str
                 "lapse refund not to payer: {ctx}"
             );
         }
+
+        // I11: once the creating transaction is over, no one can set or change
+        // the dispute policy.
+        assert!(
+            act != Act::SetPolicy,
+            "dispute policy changed after creation: {ctx}"
+        );
 
         // I9: a payee refund is signed by the payee and pays only the payer.
         if act == Act::RefundByPayee {
