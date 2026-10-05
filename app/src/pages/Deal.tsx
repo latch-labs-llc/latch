@@ -1,4 +1,4 @@
-import { BN, DealInfo, enumName } from "@latch-labs/sdk";
+import { ACTIVATION_WINDOW_SECS, BN, DealInfo, enumName } from "@latch-labs/sdk";
 import {
   createAssociatedTokenAccountIdempotentInstruction,
   getAssociatedTokenAddressSync,
@@ -130,6 +130,8 @@ export default function Deal({ address, subject }: { address: string; subject: s
     createAssociatedTokenAccountIdempotentInstruction(me, ata, owner, a.mint, tp);
 
   const remaining = BigInt(a.totalAmount.toString()) - BigInt(a.deposited.toString());
+  const lapsesAt = Number(a.fundedAt.toString()) + ACTIVATION_WINDOW_SECS;
+  const lapsed = Date.now() / 1000 >= lapsesAt;
 
   return (
     <>
@@ -257,6 +259,30 @@ export default function Deal({ address, subject }: { address: string; subject: s
             >
               Sign mutual cancellation {bit(a.cancelApprovals, myIdx) ? "(you have signed)" : ""}
             </button>
+          )}
+          {lapsed ? (
+            <div style={{ marginTop: 12 }}>
+              <p>
+                Not every party confirmed within 3 days of funding, so the buyer's full deposit can now be returned.
+                Anyone can submit this; the money can only go back to the buyer.
+              </p>
+              {publicKey ? (
+                <button
+                  className="primary"
+                  disabled={!!busy}
+                  onClick={run("lapse", async () => (await latch.refundUnactivated(deal, buyerAta)).preInstructions([ataIx(buyer, buyerAta)]).rpc())}
+                >
+                  {busy === "lapse" ? "Returning…" : "Return the deposit to the buyer"}
+                </button>
+              ) : (
+                <p className="muted">Connect any wallet to submit the return.</p>
+              )}
+            </div>
+          ) : (
+            <p className="muted" style={{ marginTop: 12 }}>
+              If not every party confirms by {new Date(lapsesAt * 1000).toLocaleString()}, the buyer's full deposit
+              can be returned to them — no one can hold it.
+            </p>
           )}
         </div>
       )}
