@@ -1,5 +1,6 @@
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { PublicKey } from "@solana/web3.js";
 import { useEffect, useState } from "react";
 import Certificate from "./pages/Certificate";
 import Cheat from "./pages/Cheat";
@@ -15,6 +16,16 @@ export interface Route {
   page: "home" | "new" | "deal" | "cert" | "store" | "orbit" | "about" | "cheat" | "send";
   address?: string;
   subject: string;
+}
+
+function isAddress(a?: string): boolean {
+  if (!a) return false;
+  try {
+    new PublicKey(a); // throws on anything that isn't a 32-byte base58 key
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function parseHash(): Route {
@@ -79,8 +90,17 @@ export default function App() {
         {route.page === "cheat" && <Cheat />}
         {route.page === "send" && <Send />}
         {route.page === "orbit" && <Orbit />}
-        {route.page === "deal" && <Deal address={route.address!} subject={route.subject} />}
-        {route.page === "cert" && <Certificate address={route.address!} subject={route.subject} />}
+        {(route.page === "deal" || route.page === "cert") && !isAddress(route.address) && (
+          <div className="card center">
+            <h3>That isn't a deal address</h3>
+            <p className="muted">
+              The link may have been cut off — a deal link ends in a 32–44 character address.{" "}
+              <a href="#/send">Start a payment</a> or <a href="#/store">try the demo store</a>.
+            </p>
+          </div>
+        )}
+        {route.page === "deal" && isAddress(route.address) && <Deal address={route.address!} subject={route.subject} />}
+        {route.page === "cert" && isAddress(route.address) && <Certificate address={route.address!} subject={route.subject} />}
       </main>
       <footer>
         <a href="#/about">What is Latch?</a> ·{" "}

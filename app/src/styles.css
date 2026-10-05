@@ -40,6 +40,7 @@ input:focus, select:focus { outline: 2px solid var(--blue-tint-line); border-col
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .row.spread { justify-content: space-between; }
 .row input { flex: 1; width: auto; }
+.row label input { width: 100%; }
 .balances { gap: 24px; font-size: .95em; }
 button, .btnlike { font: inherit; cursor: pointer; border-radius: 9px; border: 1px solid var(--brand); background: #fff; color: var(--brand); padding: 8px 16px; font-weight: 600; text-decoration: none; display: inline-block; }
 button:hover, .btnlike:hover { background: var(--blue-tint); }
@@ -80,6 +81,9 @@ code { font-family: ui-monospace, Menlo, monospace; font-size: .92em; }
 .cert table { width: 100%; border-collapse: collapse; font-size: .82em; }
 .cert td, .cert th { border: 1px solid #bbb; padding: 6px 8px; text-align: left; vertical-align: top; word-break: break-all; }
 .cert th { background: #f2efe9; }
+.cert code { word-break: break-all; overflow-wrap: anywhere; }
+.cert pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.cert .decl p { overflow-wrap: anywhere; }
 .cert .meta td { border: none; padding: 3px 8px; }
 @media print { header, footer, .warnbar, .noprint { display: none !important; } body { background: #fff; } .cert { border: none; box-shadow: none; } }
 
@@ -111,6 +115,7 @@ button.ghost:hover { background: none; }
   header { flex-wrap: wrap; gap: 8px; }
   nav.main { order: 3; width: 100%; margin: 0; justify-content: center; gap: 14px; }
   .row.spread { flex-direction: column; align-items: stretch; }
+  .row > label { flex: 1 1 100% !important; }
   .row.spread > div { width: 100%; }
   .balances { flex-direction: column; gap: 8px; }
   .milestone { flex-wrap: wrap; }
@@ -262,7 +267,8 @@ button.ghost:hover { background: none; }
   .lp-hero { padding: 48px 0 40px; }
   .lp-hero-grid, .lp-split { grid-template-columns: 1fr; gap: 30px; }
   .lp h1 { font-size: 2.1em; }
-  .lp-links { display: none; }
+  .lp-nav-in { flex-wrap: wrap; row-gap: 6px; }
+  .lp-links { order: 3; width: 100%; margin: 0; flex-wrap: wrap; justify-content: center; gap: 6px 16px; font-size: .86em; }
   .lp-foot-grid { grid-template-columns: 1fr 1fr; }
 }
 .lp-foot { text-align: left; }
