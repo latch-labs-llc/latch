@@ -101,6 +101,7 @@ export default function Deal({ address, subject }: { address: string; subject: s
   const myIdx = a.parties.slice(0, a.numParties).findIndex((p: PublicKey) => p.equals(me));
   const isParty = myIdx >= 0;
   const isPayer = myIdx === a.payerIdx;
+  const isPayee = myIdx === a.payeeIdx;
   const buyer = a.parties[a.payerIdx] as PublicKey;
   const seller = a.parties[a.payeeIdx] as PublicKey;
   const recIdx = a.recoverySigners
@@ -415,6 +416,27 @@ export default function Deal({ address, subject }: { address: string; subject: s
           )}
         </div>
       )}
+
+      {isPayee &&
+        (["Funded", "Active", "Deadlocked"].includes(state) ||
+          (state === "Signed" && BigInt(a.deposited.toString()) > 0n)) && (
+          <div className="card">
+            <h3>Can't deliver?</h3>
+            <p className="muted">
+              As the seller you can return everything still held for this deal to the buyer, on your own — no
+              dispute needed. This ends the deal and can't be undone.
+            </p>
+            <button
+              disabled={!!busy}
+              onClick={() => {
+                if (!window.confirm("Return the buyer's full remaining payment and end this deal?")) return;
+                run("payeeRefund", async () => (await latch.refundByPayee(deal, buyerAta)).preInstructions([ataIx(buyer, buyerAta)]).rpc())();
+              }}
+            >
+              {busy === "payeeRefund" ? "Refunding…" : "Refund the buyer"}
+            </button>
+          </div>
+        )}
 
       {(state === "Completed" || state === "Cancelled") && (
         <div className="card center">
