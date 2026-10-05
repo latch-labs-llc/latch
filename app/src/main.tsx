@@ -24,7 +24,9 @@ const wallets = [
 ];
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <ConnectionProvider endpoint={endpoint}>
+  // Confirmations ride the public devnet WebSocket, which limits per visitor IP;
+  // the provider key caps concurrent sockets per project, shared by every visitor.
+  <ConnectionProvider endpoint={endpoint} config={{ commitment: "confirmed", wsEndpoint: "wss://api.devnet.solana.com" }}>
     <WalletProvider wallets={wallets} autoConnect>
       <WalletModalProvider>
         <App />
