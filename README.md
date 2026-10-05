@@ -23,7 +23,7 @@ Maintained by Latch Labs LLC (in formation). Apache-2.0.
 | Program ID | `BT8tr7YXYLQPsLMq3qCipY1fBKyjT3gmGQB5amV2v5yv` |
 | Network | Solana devnet |
 | Explorer | https://explorer.solana.com/address/BT8tr7YXYLQPsLMq3qCipY1fBKyjT3gmGQB5amV2v5yv?cluster=devnet |
-| Verified hash | `0c4af8ba38fe78cd46283dad80af9792a9cb19943d279a8438510da0860ddb9e` |
+| Verified hash | `4e5fa0a61eaa89313d1015ed10c760a703dd0768c80f3e79fe0f81603715459d` |
 
 **Try it live (devnet):** https://latchlabs.org/ — connect Phantom, Solflare, or a zero-setup burner wallet; built-in test-token faucet.
 
