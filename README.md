@@ -2,17 +2,36 @@
 
 [![CI](https://github.com/latch-labs-llc/latch/actions/workflows/ci.yml/badge.svg)](https://github.com/latch-labs-llc/latch/actions/workflows/ci.yml) [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) [![npm sdk](https://img.shields.io/npm/v/%40latch-labs%2Fsdk?label=%40latch-labs%2Fsdk)](https://www.npmjs.com/package/@latch-labs/sdk) [![npm cli](https://img.shields.io/npm/v/%40latch-labs%2Fcli?label=%40latch-labs%2Fcli)](https://www.npmjs.com/package/@latch-labs/cli)
 
-**Split-control escrow for Solana.** Two or more parties lock tokenized
-consideration (stablecoins first) in a program-owned vault that no single
-party — and no company — can move. Funds release only on the parties'
-sign-offs, a resolution rule the parties chose at formation, or a
-party-designated recovery role for key loss and court orders. The hash of the
-parties' off-chain agreement, and every signature and consent, is recorded
-on-chain so a complete, independently verifiable execution record can be
-reconstructed.
+**Protected payments between strangers, on Solana.** The buyer's payment
+sits in a program-owned vault that no single party — and no company — can
+move. It releases on the parties' sign-offs, a protection timer, a joint
+settlement, or a rule both sides chose up front; a party-chosen recovery role
+covers lost keys and court orders. The hash of the parties' agreement and
+every signature are recorded on-chain, so anyone can rebuild a court-readable
+record of the deal. Underneath it is split-control escrow: an open primitive
+with no admin key, no token and no protocol fee.
 
 > ⚠️ **Unaudited, experimental, devnet only. Do not use with real funds.**
-> An independent security review is planned; see [SECURITY.md](SECURITY.md).
+> An independent security review comes before any mainnet; see [SECURITY.md](SECURITY.md).
+
+## See it in 60 seconds — no wallet needed
+
+1. **Pay as a stranger.** Open the [demo store](https://latchlabs.org/#/store),
+   pick an item and pay with the simulated card — no wallet, no signup. You
+   get a real deal on devnet.
+2. **Try to break it.** [Try-to-Cheat](https://latchlabs.org/#/cheat) fires
+   real forbidden transactions at a live funded deal — the seller grabbing the
+   money, the buyer clawing it back, an "operator" key — and links each
+   on-chain rejection.
+3. **Read the evidence.** Open the order's certificate (or
+   [this one](https://latchlabs.org/#/cert/5Hb6c1gz2kfJ4NuGqSjQ3Yc4yssVaw4mGADiXZNrbAJb?s=Try-to-cheat%20standing%20demo%20deal)):
+   every signature and event rebuilt from public chain data, with a live check
+   of the signed agreement's digest.
+4. **Check the claims.** The deployed bytecode matches this repository
+   ([verify it yourself](#verify-the-deployed-bytecode-yourself)); `make test`
+   runs 75 tests including a randomized state-machine fuzz;
+   [SECURITY_NOTES.md](SECURITY_NOTES.md) lists known risks and every fix;
+   [SPEC.md](SPEC.md) specifies the agreement format with test vectors.
 
 Maintained by Latch Labs LLC (in formation). Apache-2.0.
 
