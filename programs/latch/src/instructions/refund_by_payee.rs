@@ -1,23 +1,20 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
-use crate::constants::ACTIVATION_WINDOW_SECS;
 use crate::error::EscrowError;
-use crate::events::ActivationLapsed;
+use crate::events::PayeeRefunded;
 use crate::payout::transfer_from_vault;
 use crate::state::*;
 
-/// A deal holding the payer's deposit that has not become Active within the
-/// activation window returns its whole vault to the payer. The window runs from
-/// full funding — or, for a partially funded deal still in Signed, from when
-/// every party signed (mutual cancel needs the counterparty and recovery is
-/// post-funding only, so nothing else could release a partial deposit).
-/// Permissionless like every other crank: anyone may submit it, but the only
-/// possible destination is the payer's own token account for the deal's mint.
+/// The payee alone returns everything still in the vault to the payer — the
+/// "I can't deliver, here's your money back" exit. It only ever moves funds
+/// toward the payer, so it needs no one else's consent. Valid whenever the
+/// vault can hold the payer's deposit: a partially funded Signed deal, Funded,
+/// Active, or Deadlocked.
 #[event_cpi]
 #[derive(Accounts)]
-pub struct RefundUnactivated<'info> {
-    pub cranker: Signer<'info>,
+pub struct RefundByPayee<'info> {
+    pub payee: Signer<'info>,
     #[account(mut, has_one = mint, has_one = vault, has_one = token_program @ EscrowError::TokenProgramMismatch)]
     pub deal: Box<Account<'info, Deal>>,
     pub mint: Box<InterfaceAccount<'info, Mint>>,
@@ -32,19 +29,17 @@ pub struct RefundUnactivated<'info> {
     pub token_program: Interface<'info, TokenInterface>,
 }
 
-pub fn handle_refund_unactivated(ctx: Context<RefundUnactivated>) -> Result<()> {
+pub fn handle_refund_by_payee(ctx: Context<RefundByPayee>) -> Result<()> {
     let deal = &ctx.accounts.deal;
-    let window_start = match deal.state {
-        DealState::Funded => deal.funded_at,
-        DealState::Signed if deal.deposited > 0 => deal.signed_at,
+    require!(
+        ctx.accounts.payee.key() == deal.parties[deal.payee_idx as usize],
+        EscrowError::OnlyPayeeMayRefund
+    );
+    match deal.state {
+        DealState::Funded | DealState::Active | DealState::Deadlocked => {}
+        DealState::Signed if deal.deposited > 0 => {}
         _ => return err!(EscrowError::InvalidState),
-    };
-
-    let now = Clock::get()?.unix_timestamp;
-    let lapses_at = window_start
-        .checked_add(ACTIVATION_WINDOW_SECS)
-        .ok_or(EscrowError::Overflow)?;
-    require!(now >= lapses_at, EscrowError::ActivationWindowOpen);
+    }
 
     let refund = ctx.accounts.vault.amount;
     transfer_from_vault(
@@ -57,13 +52,20 @@ pub fn handle_refund_unactivated(ctx: Context<RefundUnactivated>) -> Result<()> 
     )?;
 
     let deal = &mut ctx.accounts.deal;
-    deal.state = DealState::Cancelled;
+    // Nothing released yet: the deal never happened. Otherwise earlier
+    // milestones stand and the deal concludes with the remainder returned.
+    deal.state = if deal.released_total == 0 {
+        DealState::Cancelled
+    } else {
+        DealState::Completed
+    };
+    let now = Clock::get()?.unix_timestamp;
     let seq = deal.next_seq();
-    emit_cpi!(ActivationLapsed {
+    emit_cpi!(PayeeRefunded {
         deal: deal.key(),
         seq,
+        payee: ctx.accounts.payee.key(),
         refunded_to_payer: refund,
-        funded_at: deal.funded_at,
         timestamp: now,
     });
     Ok(())

@@ -81,4 +81,8 @@ pub mod latch {
     pub fn refund_unactivated(ctx: Context<RefundUnactivated>) -> Result<()> {
         instructions::refund_unactivated::handle_refund_unactivated(ctx)
     }
+
+    pub fn refund_by_payee(ctx: Context<RefundByPayee>) -> Result<()> {
+        instructions::refund_by_payee::handle_refund_by_payee(ctx)
+    }
 }

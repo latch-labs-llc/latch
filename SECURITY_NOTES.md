@@ -15,8 +15,13 @@ counterparty never confirmed ready, the deposit stayed locked, since mutual
 cancel and a parties-only recovery set both need that counterparty. Fixed by
 `refund_unactivated` (anyone may return the vault to the payer 3 days after
 funding if the deal never became Active), with regression tests in
-`tests/test_refund_unactivated.rs`. The notes below reflect the post-fix
-behavior.
+`tests/test_refund_unactivated.rs`. A second pass (2026-10-06) added a
+randomized state-machine test (`tests/test_invariants_fuzz.rs`: token
+conservation, terminal finality, payouts only to recorded parties, no
+single-party fund movement, clock accounting — checked after every step),
+extended the lapse refund to partially funded deals (a partial deposit could
+previously be stranded in Signed), and added `refund_by_payee`. The notes
+below reflect the post-fix behavior.
 
 ## Program-level
 
@@ -35,6 +40,10 @@ behavior.
    revisit with issuer-freeze playbooks.
 3. **Deadlock stalling incentives.** Timeout rules favor whoever the clock helps;
    they can simply go quiet. Product-layer disclosure, not fixable in-program.
+   In `FromActivation` mode a raised dispute pauses the clock and only the
+   raiser may withdraw it, so the raiser can hold the vault until a mutual
+   settlement, a recovery, or (if the payee raised it) a payee refund. A
+   bounded end state for paused disputes is an open design item.
 4. **`resolution_sign` proposal races.** A changed party proposal resets party
    approvals — a malicious party can grief by re-proposing forever, but can never
    move funds without the counterparty (or the timeout). Griefing accepted.

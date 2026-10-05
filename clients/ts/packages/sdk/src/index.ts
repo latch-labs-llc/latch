@@ -268,14 +268,32 @@ export class LatchClient {
   }
 
   /**
-   * Return the whole vault to the payer once a funded deal has gone
-   * `ACTIVATION_WINDOW_SECS` (3 days) without becoming Active. Permissionless:
+   * Return the whole vault to the payer once a deal holding a deposit has gone
+   * `ACTIVATION_WINDOW_SECS` (3 days) without becoming Active — measured from
+   * full funding, or from signing for a partially funded deal. Permissionless:
    * any wallet may submit it; the payout can only reach the payer.
    */
   async refundUnactivated(deal: PublicKey, payerTokenAccount: PublicKey, cranker?: PublicKey) {
     const d = await this.fetchDeal(deal);
     return this.program.methods.refundUnactivated().accounts({
       cranker: this.signer(cranker),
+      deal,
+      mint: d.account.mint,
+      vault: d.vault,
+      payerTokenAccount,
+      tokenProgram: d.account.tokenProgram,
+    } as any);
+  }
+
+  /**
+   * The payee alone returns everything still in the vault to the payer — an
+   * honest seller backing out. Payer-only destination; valid with a deposit in
+   * Signed, or in Funded / Active / Deadlocked.
+   */
+  async refundByPayee(deal: PublicKey, payerTokenAccount: PublicKey, payee?: PublicKey) {
+    const d = await this.fetchDeal(deal);
+    return this.program.methods.refundByPayee().accounts({
+      payee: this.signer(payee),
       deal,
       mint: d.account.mint,
       vault: d.vault,

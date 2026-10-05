@@ -464,6 +464,59 @@
       ]
     },
     {
+      "name": "refund_by_payee",
+      "discriminator": [
+        98,
+        231,
+        101,
+        12,
+        184,
+        158,
+        92,
+        98
+      ],
+      "accounts": [
+        {
+          "name": "payee",
+          "signer": true
+        },
+        {
+          "name": "deal",
+          "writable": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "payer_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "refund_unactivated",
       "discriminator": [
         77,
@@ -884,6 +937,19 @@
       ]
     },
     {
+      "name": "PayeeRefunded",
+      "discriminator": [
+        232,
+        6,
+        34,
+        254,
+        145,
+        67,
+        190,
+        245
+      ]
+    },
+    {
       "name": "RecoverySigned",
       "discriminator": [
         76,
@@ -1123,6 +1189,11 @@
       "code": 6039,
       "name": "ActivationWindowOpen",
       "msg": "Activation window has not lapsed"
+    },
+    {
+      "code": 6040,
+      "name": "OnlyPayeeMayRefund",
+      "msg": "Only the payee may refund the payer"
     }
   ],
   "types": [
@@ -1963,6 +2034,37 @@
           {
             "name": "all_ready",
             "type": "bool"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PayeeRefunded",
+      "docs": [
+        "The payee voluntarily returned everything left in the vault to the payer."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "deal",
+            "type": "pubkey"
+          },
+          {
+            "name": "seq",
+            "type": "u64"
+          },
+          {
+            "name": "payee",
+            "type": "pubkey"
+          },
+          {
+            "name": "refunded_to_payer",
+            "type": "u64"
           },
           {
             "name": "timestamp",

@@ -142,6 +142,16 @@ pub struct DealCancelled {
     pub timestamp: i64,
 }
 
+/// The payee voluntarily returned everything left in the vault to the payer.
+#[event]
+pub struct PayeeRefunded {
+    pub deal: Pubkey,
+    pub seq: u64,
+    pub payee: Pubkey,
+    pub refunded_to_payer: u64,
+    pub timestamp: i64,
+}
+
 /// A funded deal never became Active within the activation window, so the
 /// deposit was returned to the payer. Distinct from `DealCancelled` so the
 /// record shows the refund happened by lapse, not by mutual consent.

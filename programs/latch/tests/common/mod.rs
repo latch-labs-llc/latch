@@ -633,6 +633,48 @@ pub fn ix_refund_unactivated_with_vault(
     )
 }
 
+pub fn ix_refund_by_payee(
+    payee: &Pubkey,
+    deal: &Pubkey,
+    mint: &Pubkey,
+    payer_token_account: &Pubkey,
+    token_program: &Pubkey,
+) -> Instruction {
+    ix_refund_by_payee_with_vault(
+        payee,
+        deal,
+        mint,
+        &vault_ata(deal, mint, token_program),
+        payer_token_account,
+        token_program,
+    )
+}
+
+pub fn ix_refund_by_payee_with_vault(
+    payee: &Pubkey,
+    deal: &Pubkey,
+    mint: &Pubkey,
+    vault: &Pubkey,
+    payer_token_account: &Pubkey,
+    token_program: &Pubkey,
+) -> Instruction {
+    Instruction::new_with_bytes(
+        latch::id(),
+        &latch::instruction::RefundByPayee {}.data(),
+        latch::accounts::RefundByPayee {
+            payee: *payee,
+            deal: *deal,
+            mint: *mint,
+            vault: *vault,
+            payer_token_account: *payer_token_account,
+            token_program: *token_program,
+            event_authority: event_authority(),
+            program: latch::id(),
+        }
+        .to_account_metas(None),
+    )
+}
+
 // ---------- fixture: a standard 2-party classic-SPL deal ----------
 
 pub struct Fixture {

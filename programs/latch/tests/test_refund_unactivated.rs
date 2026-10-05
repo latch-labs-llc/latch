@@ -200,3 +200,65 @@ fn refund_rejects_a_substituted_vault() {
         "ConstraintHasOne",
     );
 }
+
+/// Partial funding: the deal stays Signed with tokens in the vault. Mutual
+/// cancel needs the counterparty and recovery is post-funding only, so the
+/// lapse refund must also cover a partially funded Signed deal.
+fn partially_funded() -> Fixture {
+    let mut f = Fixture::new(vec![1000], |_| {});
+    f.sign_all();
+    let ix = ix_deposit(
+        &f.alice.pubkey(),
+        &f.deal,
+        &f.mint,
+        &f.alice_ata,
+        &f.token_program,
+        400,
+    );
+    send(&mut f.svm, &[ix], &f.alice.pubkey(), &[&f.alice]).unwrap();
+    assert_eq!(f.deal_state().state, DealState::Signed);
+    f
+}
+
+#[test]
+fn partial_deposit_lapses_back_to_payer() {
+    let mut f = partially_funded();
+    let alice_before = token_balance(&f.svm, &f.alice_ata);
+    warp(&mut f.svm, ACTIVATION_WINDOW_SECS);
+    let mallory = stranger(&mut f);
+    let ix = ix_refund_unactivated(
+        &mallory.pubkey(),
+        &f.deal,
+        &f.mint,
+        &f.alice_ata,
+        &f.token_program,
+    );
+    send(&mut f.svm, &[ix], &mallory.pubkey(), &[&mallory]).unwrap();
+    assert_eq!(f.deal_state().state, DealState::Cancelled);
+    assert_eq!(token_balance(&f.svm, &f.alice_ata), alice_before + 400);
+}
+
+#[test]
+fn partial_deposit_refund_waits_for_window_from_signing() {
+    let mut f = partially_funded();
+    warp(&mut f.svm, ACTIVATION_WINDOW_SECS - 1);
+    let ix = ix_refund_unactivated(
+        &f.alice.pubkey(),
+        &f.deal,
+        &f.mint,
+        &f.alice_ata,
+        &f.token_program,
+    );
+    assert_err(
+        send(
+            &mut f.svm,
+            std::slice::from_ref(&ix),
+            &f.alice.pubkey(),
+            &[&f.alice],
+        ),
+        "ActivationWindowOpen",
+    );
+    warp(&mut f.svm, 1);
+    send(&mut f.svm, &[ix], &f.alice.pubkey(), &[&f.alice]).unwrap();
+    assert_eq!(f.deal_state().state, DealState::Cancelled);
+}

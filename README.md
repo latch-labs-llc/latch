@@ -71,6 +71,8 @@ Draft ──all parties sign terms hash──▶ Signed ──deposit──▶ F
                               Deadlocked ──rule / mutual sign-off / recovery──────┘
 
 Funded ──not Active 3 days after funding──▶ Cancelled  (whole vault refunded to the payer; anyone may crank)
+Signed with a partial deposit ──3 days after signing──▶ Cancelled  (same refund)
+Signed+deposit / Funded / Active / Deadlocked ──payee refunds──▶ Cancelled or Completed  (payee only; payer-only destination)
 ```
 
 - **Parties & thresholds:** up to 8 parties, M-of-N milestone approvals,
@@ -86,9 +88,12 @@ Funded ──not Active 3 days after funding──▶ Cancelled  (whole vault re
 - **Permissionless cranks:** once conditions are met, anyone can submit a
   release, resolution, or lapsed-activation refund; no one can redirect it.
   No operator sits in the flow of funds.
-- **No stranded deposits:** a funded deal that is not Active 3 days after
-  funding returns the whole vault to the payer, so a counterparty who never
-  confirms ready cannot hold the deposit.
+- **No stranded deposits:** a deal holding a deposit that is not Active 3
+  days after funding (or after signing, if only partly funded) returns the
+  whole vault to the payer, so a counterparty who never confirms ready
+  cannot hold the deposit.
+- **Payee refunds:** the payee can return everything remaining to the payer
+  on their own at any point before the deal ends — no dispute needed.
 - **Token safety:** SPL Token and Token-2022. Mints are vetted at creation —
   escrow-impossible extensions are rejected (non-transferable, default-frozen,
   active transfer hooks, unknown extensions); custody-affecting ones (freeze
@@ -103,7 +108,7 @@ Prereqs: Rust (stable), Solana CLI (Agave 4.x), Anchor 1.2.x.
 
 ```sh
 make build     # anchor build --arch v0  (required flag — see note)
-make test      # 53 LiteSVM tests: lifecycle, every failure path, all six
+make test      # 64 LiteSVM tests (incl. a randomized state-machine fuzz): lifecycle, every failure path, all six
                # rules & both timer modes, recovery, hostile Token-2022
                # mints, and real ZK proof verification
 ```
@@ -128,7 +133,7 @@ data.
 ## TypeScript SDK & CLI
 
 ```sh
-npm install @latch-labs/sdk     # typed client: all 15 instructions, events, PDAs
+npm install @latch-labs/sdk     # typed client: all 16 instructions, events, PDAs
 npm install -g @latch-labs/cli  # full-lifecycle `latch` command
 ```
 

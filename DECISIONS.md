@@ -38,6 +38,20 @@ integrators can see why the program behaves the way it does.
   - *Applies to deals funded before this instruction shipped* (devnet only):
     it adds an exit that returns funds to their depositor and changes no
     frozen parameter.
+  - *Partial deposits too:* a deal funded below its total stays Signed, where
+    mutual cancel needs the counterparty and recovery is unavailable. The same
+    refund covers it, with the window measured from when every party signed.
+    A Signed deal with nothing deposited cannot be cancelled this way — there
+    is nothing to return, and funding may legitimately come later.
+- **The payee can refund the payer alone (`refund_by_payee`).** Every exit
+  that returns money to the payer otherwise needs the payer's cooperation,
+  a dispute, or a timer, so an honest payee who cannot deliver had no direct
+  way to make the payer whole. The payee may return everything remaining in
+  the vault at any point while it can hold the deposit (Signed with a
+  deposit, Funded, Active, Deadlocked). It needs no one else's consent
+  because it only moves funds toward the payer. The deal ends Cancelled if
+  nothing was released, otherwise Completed (earlier milestones stand);
+  a distinct `PayeeRefunded` event records it.
 - **`recovery_execute` can only pay the parties** (any payer/payee split). A
   compromised recovery set can mis-split funds between the parties, never pay
   a third address.

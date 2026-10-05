@@ -470,6 +470,59 @@ export type Latch = {
       ]
     },
     {
+      "name": "refundByPayee",
+      "discriminator": [
+        98,
+        231,
+        101,
+        12,
+        184,
+        158,
+        92,
+        98
+      ],
+      "accounts": [
+        {
+          "name": "payee",
+          "signer": true
+        },
+        {
+          "name": "deal",
+          "writable": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "payerTokenAccount",
+          "writable": true
+        },
+        {
+          "name": "tokenProgram",
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "eventAuthority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "refundUnactivated",
       "discriminator": [
         77,
@@ -890,6 +943,19 @@ export type Latch = {
       ]
     },
     {
+      "name": "payeeRefunded",
+      "discriminator": [
+        232,
+        6,
+        34,
+        254,
+        145,
+        67,
+        190,
+        245
+      ]
+    },
+    {
       "name": "recoverySigned",
       "discriminator": [
         76,
@@ -1129,6 +1195,11 @@ export type Latch = {
       "code": 6039,
       "name": "activationWindowOpen",
       "msg": "Activation window has not lapsed"
+    },
+    {
+      "code": 6040,
+      "name": "onlyPayeeMayRefund",
+      "msg": "Only the payee may refund the payer"
     }
   ],
   "types": [
@@ -1969,6 +2040,37 @@ export type Latch = {
           {
             "name": "allReady",
             "type": "bool"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "payeeRefunded",
+      "docs": [
+        "The payee voluntarily returned everything left in the vault to the payer."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "deal",
+            "type": "pubkey"
+          },
+          {
+            "name": "seq",
+            "type": "u64"
+          },
+          {
+            "name": "payee",
+            "type": "pubkey"
+          },
+          {
+            "name": "refundedToPayer",
+            "type": "u64"
           },
           {
             "name": "timestamp",

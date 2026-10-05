@@ -82,4 +82,6 @@ pub enum EscrowError {
     Overflow,
     #[msg("Activation window has not lapsed")]
     ActivationWindowOpen,
+    #[msg("Only the payee may refund the payer")]
+    OnlyPayeeMayRefund,
 }
