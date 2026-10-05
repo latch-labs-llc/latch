@@ -15,7 +15,7 @@ counterparty never confirmed ready, the deposit stayed locked, since mutual
 cancel and a parties-only recovery set both need that counterparty. Fixed by
 `refund_unactivated` (anyone may return the vault to the payer 3 days after
 funding if the deal never became Active), with regression tests in
-`tests/test_refund_unactivated.rs`. A second pass (2026-10-06) added a
+`tests/test_refund_unactivated.rs`. A second pass (2026-10-05) added a
 randomized state-machine test (`tests/test_invariants_fuzz.rs`: token
 conservation, terminal finality, payouts only to recorded parties, no
 single-party fund movement, clock accounting — checked after every step),
