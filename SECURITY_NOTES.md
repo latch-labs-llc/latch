@@ -84,6 +84,16 @@ behavior.
 16. **Terms hash** is opaque 32 bytes; the program cannot verify what was hashed.
     Any signing ceremony built on top must bind identity ↔ wallet ↔ document;
     that binding is an integrator concern, outside this program.
+17. **Demo web app: guest keys and demo secrets live in the browser.** Guest
+    checkout generates an ephemeral keypair and keeps its secret in
+    `localStorage` (with the pending order) so an interrupted checkout can
+    resume; anyone with access to that browser profile controls that guest
+    wallet. The demo merchants, the test-token mint authority, the SOL tap,
+    and the Try-to-Cheat party keys are embedded in the site on purpose. All
+    of this is acceptable only because the app runs on devnet with test
+    tokens. A production checkout must not hold buyer keys in plain browser
+    storage (use a wallet or an embedded-wallet provider) and must run the
+    merchant side server-side.
 
 ## Out of scope for v0.1 (revisit before mainnet)
 
