@@ -70,7 +70,7 @@ export default function Landing() {
               <a className="lp-btn" href="#/send">Send a protected payment</a>
             </div>
             <div className="lp-metrics">
-              <span><b>64</b> tests, every failure path</span>
+              <span><b>73</b> tests, every failure path</span>
               <span><b>Verified</b> reproducible build</span>
               <span><b>3</b> packages on npm</span>
               <span><b>0</b> protocol fees · no token</span>
@@ -219,7 +219,7 @@ export default function Landing() {
             <div>
               <span className="lp-chip lp-chip-done">Shipped</span>
               <h3>The primitive, proven</h3>
-              <p>Verified reproducible program on devnet, 64 tests, three npm packages, two storefronts on the published checkout package, evidence packets on every deal.</p>
+              <p>Verified reproducible program on devnet, 73 tests, three npm packages, two storefronts on the published checkout package, evidence packets on every deal.</p>
             </div>
             <div>
               <span className="lp-chip lp-chip-next">Next</span>

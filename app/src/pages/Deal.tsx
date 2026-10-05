@@ -133,6 +133,21 @@ export default function Deal({ address, subject }: { address: string; subject: s
   const remaining = BigInt(a.totalAmount.toString()) - BigInt(a.deposited.toString());
   const lapsesAt = Number(a.fundedAt.toString()) + ACTIVATION_WINDOW_SECS;
   const lapsed = Date.now() / 1000 >= lapsesAt;
+  const activationTimer = enumName(a.timerMode as object) === "FromActivation";
+  const policy = enumName(a.disputePolicy as object);
+  const windowDays = Number(a.disputeWindowSecs) / 86400;
+  const windowText = `${windowDays} day${windowDays === 1 ? "" : "s"}`;
+  const disputedSecs =
+    Number(a.disputedSecs) + (state === "Deadlocked" ? Math.max(0, Date.now() / 1000 - Number(a.deadlockRaisedAt)) : 0);
+  const disputeExpired = activationTimer && policy !== "NeverExpire" && disputedSecs >= Number(a.disputeWindowSecs);
+  const policyLabel =
+    policy === "NeverExpire"
+      ? "stay locked until both sides agree"
+      : policy === "ResumeRule"
+        ? `after ${windowText} of disputes the clock resumes`
+        : policy === "Split"
+          ? `after ${windowText} of disputes the funds split`
+          : `after ${windowText} of disputes the buyer is refunded`;
 
   return (
     <>
@@ -167,7 +182,7 @@ export default function Deal({ address, subject }: { address: string; subject: s
         <p className="muted">
           Rule: <b>{enumName(a.deadlockRule as object)}</b> · timer {enumName(a.timerMode as object)} ·{" "}
           timeout {a.timeoutSecs.toString()}s · recovery {a.recoveryThreshold}-of-{a.numRecovery} (notice{" "}
-          {a.recoveryDelaySecs.toString()}s)
+          {a.recoveryDelaySecs.toString()}s){activationTimer && <> · unresolved disputes {policyLabel}</>}
         </p>
       </div>
 
@@ -336,6 +351,23 @@ export default function Deal({ address, subject }: { address: string; subject: s
             Raised by <code>{short((a.deadlockRaisedBy as PublicKey).toBase58(), 6)}</code>. The pre-agreed rule (
             {enumName(a.deadlockRule as object)}) governs; the parties can also settle jointly at any time.
           </p>
+          {activationTimer && policy === "NeverExpire" && (
+            <p className="muted">
+              The clock is paused. The funds stay put until you both settle, your recovery signers act, or the seller
+              refunds the buyer.
+            </p>
+          )}
+          {activationTimer && policy !== "NeverExpire" && (
+            <p className="muted">
+              Dispute time used: {(disputedSecs / 86400).toFixed(1)} of {windowText} — {policyLabel}.
+              {disputeExpired && policy !== "ResumeRule" && " The window has passed: anyone can execute the resolution below."}
+            </p>
+          )}
+          {disputeExpired && policy === "ResumeRule" && publicKey && (
+            <button className="primary" disabled={!!busy} onClick={run("lift", () => latch.withdrawDeadlock(deal).rpc())}>
+              {busy === "lift" ? "Lifting…" : "Lift the expired dispute (anyone can) — the clock resumes"}
+            </button>
+          )}
           {a.proposalActive && (
             <p>
               Current settlement proposal: <b>{ui(a.proposedToPayee, decimals)}</b> to the seller, remainder to the

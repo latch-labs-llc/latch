@@ -74,6 +74,16 @@ export default function Certificate({ address, subject }: { address: string; sub
             <td>Digest verification</td>
             <td>{hashOk === true ? "✓ regenerated agreement text matches on-chain digest" : hashOk === false ? "✗ MISMATCH — subject line missing or altered in link" : "…"}</td>
           </tr>
+          {enumName(a.timerMode as object) === "FromActivation" && (
+            <tr>
+              <td>Unresolved disputes</td>
+              <td>
+                {enumName(a.disputePolicy as object) === "NeverExpire"
+                  ? "stay locked until the parties agree (default)"
+                  : `${enumName(a.disputePolicy as object)} after ${Number(a.disputeWindowSecs) / 86400} day(s) of disputes (set before signing)`}
+              </td>
+            </tr>
+          )}
           <tr><td>Read via RPC</td><td><code>{connection.rpcEndpoint}</code></td></tr>
           <tr><td>Slot at retrieval</td><td>{prov ? prov.slot.toLocaleString() : "…"}</td></tr>
           <tr><td>Cluster genesis hash</td><td><code>{prov?.genesis ?? "…"}</code> (identifies the cluster)</td></tr>

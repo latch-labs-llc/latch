@@ -1,4 +1,4 @@
-import { BN, DeadlockRule, RiskFlags, TimerMode, dealPda, LATCH_PROGRAM_ID } from "@latch-labs/sdk";
+import { BN, DeadlockRule, DisputePolicy, RiskFlags, TimerMode, dealPda, LATCH_PROGRAM_ID } from "@latch-labs/sdk";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
@@ -30,6 +30,8 @@ export default function Home() {
   const [timeout_, setTimeout_] = useState("86400");
   const [tieBreaker, setTieBreaker] = useState("");
   const [splitBps, setSplitBps] = useState("5000");
+  const [disputePolicy, setDisputePolicy] = useState<keyof typeof DisputePolicy>("NeverExpire");
+  const [disputeDays, setDisputeDays] = useState("30");
   const [openAddr, setOpenAddr] = useState("");
 
   const refreshBalances = async () => {
@@ -105,6 +107,13 @@ export default function Home() {
       });
       const termsHash = await sha256(text);
 
+      const days = parseInt(disputeDays);
+      const optIn = effTimer === "FromActivation" && disputePolicy !== "NeverExpire";
+      if (optIn && !(days >= 1 && days <= 365)) throw new Error("dispute window must be 1–365 days");
+      const policyIx = optIn
+        ? [await latch!.setDisputePolicy(deal, DisputePolicy[disputePolicy], days * 86400).instruction()]
+        : [];
+
       await latch!
         .createDeal({
           dealId,
@@ -125,6 +134,7 @@ export default function Home() {
           acceptedRiskFlags: RiskFlags.ALL,
           mint: LDD_MINT,
         })
+        .postInstructions(policyIx)
         .rpc();
       window.location.hash = `#/deal/${deal.toBase58()}?s=${encodeURIComponent(subject.trim())}`;
     });
@@ -228,6 +238,25 @@ export default function Home() {
               Timeout (seconds)
               <input value={timeout_} onChange={(e) => setTimeout_(e.target.value)} type="number" min="1" />
             </label>
+            {timerMode === "FromActivation" && (
+              <div className="row">
+                <label style={{ flex: 2 }}>
+                  If a dispute is never resolved…
+                  <select value={disputePolicy} onChange={(e) => setDisputePolicy(e.target.value as any)}>
+                    <option value="NeverExpire">It stays locked until both sides agree (default)</option>
+                    <option value="ResumeRule">After the window, the clock resumes under the rule above</option>
+                    <option value="Split">After the window, the funds split</option>
+                    <option value="RefundPayer">After the window, the buyer is refunded</option>
+                  </select>
+                </label>
+                {disputePolicy !== "NeverExpire" && (
+                  <label style={{ flex: 1 }}>
+                    Window (days of disputes, 1–365)
+                    <input value={disputeDays} onChange={(e) => setDisputeDays(e.target.value)} type="number" min="1" max="365" />
+                  </label>
+                )}
+              </div>
+            )}
           </>
         )}
         {rule === "AutoSplit" && (
