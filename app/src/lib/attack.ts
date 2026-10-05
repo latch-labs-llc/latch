@@ -9,7 +9,7 @@
  */
 import { Keypair, PublicKey } from "@solana/web3.js";
 
-export const ATTACK_DEAL = new PublicKey("BoN26mW439q1jU3YXtpsftvEiMygbcEN4BuiHWKyjsVd");
+export const ATTACK_DEAL = new PublicKey("5Hb6c1gz2kfJ4NuGqSjQ3Yc4yssVaw4mGADiXZNrbAJb");
 export const ATTACK_BUYER_ATA = new PublicKey("Guek1YbUGphZTiL5NRXzrs6ijVNL25szvbaTsWw9dRrM");
 export const ATTACK_SELLER_ATA = new PublicKey("EXnkvMuRJx9t2Q6iAgtHaWZnqFRbcmCKT3izDTkxXFZd");
 
