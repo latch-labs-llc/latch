@@ -17,6 +17,9 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # Every npm release waits for a maintainer's approval in the GitHub UI;
+    # the environment only accepts release tags (sdk-v*, cli-v*, checkout-v*).
+    environment: npm-publish
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
