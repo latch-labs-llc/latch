@@ -16,4 +16,5 @@ app/dist
 app/e2e/shots
 app/e2e/shots-dispute
 app/e2e/shots-checkout
+app/e2e/shots-refund
 clients/ts/packages/sdk/docs
