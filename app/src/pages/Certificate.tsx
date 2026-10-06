@@ -6,6 +6,17 @@ import { buildAgreement, hex, sha256 } from "../lib/agreement";
 import { LDD_DECIMALS, LDD_MINT } from "../lib/ldd";
 import { useLatchOrReadonly } from "../lib/useLatch";
 
+/** The RPC endpoint without credentials: provider API keys ride in the query
+ * string and have no place on a printed evidence packet. */
+function rpcShown(endpoint: string): string {
+  try {
+    const u = new URL(endpoint);
+    return `${u.origin}${u.pathname}${u.search ? " (API key omitted)" : ""}`;
+  } catch {
+    return endpoint;
+  }
+}
+
 function ts(t: number | null): string {
   return t ? new Date(t * 1000).toUTCString() : "—";
 }
@@ -84,7 +95,7 @@ export default function Certificate({ address, subject }: { address: string; sub
               </td>
             </tr>
           )}
-          <tr><td>Read via RPC</td><td><code>{connection.rpcEndpoint}</code></td></tr>
+          <tr><td>Read via RPC</td><td><code>{rpcShown(connection.rpcEndpoint)}</code></td></tr>
           <tr><td>Slot at retrieval</td><td>{prov ? prov.slot.toLocaleString() : "…"}</td></tr>
           <tr><td>Cluster genesis hash</td><td><code>{prov?.genesis ?? "…"}</code> (identifies the cluster)</td></tr>
           <tr><td>Retrieved (local clock)</td><td>{prov?.at ?? "…"}</td></tr>
