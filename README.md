@@ -46,7 +46,7 @@ Maintained by Latch Labs LLC (in formation). Apache-2.0.
 
 **Try it live (devnet):** https://latchlabs.org/ — connect Phantom, Solflare, or a zero-setup burner wallet; built-in test-token faucet.
 
-**Demo videos:** [Full sale lifecycle](https://youtu.be/69Psn335b_I) · [Dispute raised and settled on-chain](https://youtu.be/lbIxBCt56W0)
+**Videos:** [Pitch (1:51)](https://youtu.be/Sz9oxnBHMo4) · [Demo walkthrough (2:54)](https://youtu.be/AlvvLlAnFIE) · earlier, on the reference demo server: [full sale lifecycle](https://youtu.be/69Psn335b_I), [dispute settled on-chain](https://youtu.be/lbIxBCt56W0)
 
 ### Verify the deployed bytecode yourself
 
