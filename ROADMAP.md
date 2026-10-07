@@ -33,6 +33,13 @@ points into most of these.
 - **Documentary settlement** — releases triggered by documents or
   attestations (inspection certificates, delivery records) with the
   tie-breaker role acting as examiner; the shape trade workflows need.
+- **DvP composability** (after the audit) — the Solana Foundation's
+  open-source [DvP](https://github.com/solana-foundation/dvp) program
+  settles two tokenized legs atomically under a designated settlement
+  authority. Two seams: a Latch deal PDA as that authority, so a DvP trade
+  settles only on the parties' Latch sign-offs; and, at a final milestone,
+  the Latch vault funding the cash leg of a DvP against a tokenized
+  document of title, so payment and documents move atomically.
 - **Confidential amounts** — Token-2022 confidential transfers for deal
   amounts (see ZK_NOTES.md; account layout already reserves space).
 - **Hosted session API** — the `@latch-labs/checkout` interface served over
