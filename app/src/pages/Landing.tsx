@@ -161,6 +161,42 @@ export default function Landing() {
       </section>
 
       <section className="lp-section">
+        <div className="lp-wrap">
+          <div className="lp-eyebrow">Preview</div>
+          <h2>The same rails, in your pocket.</h2>
+          <div className="lp-preview">
+            <div className="lp-preview-copy">
+              <p>
+                A standalone app on the same program. Pay or request with the dial, negotiate the terms in a
+                chat only the two of you can read, sign them from the thread, and the deal page shows the
+                agreement text that matches the on-chain record.
+              </p>
+              <ul>
+                <li>Proposals and counter-proposals are signed by the sender's wallet; accepting creates the deal.</li>
+                <li>Every deal carries its evidence packet, rebuilt from public chain data.</li>
+                <li>Nothing new on-chain — it drives the same seventeen instructions as this site.</li>
+              </ul>
+              <p className="lp-dim">Running on devnet today. Opens after the hackathon.</p>
+            </div>
+            <div className="lp-phones">
+              <figure>
+                <img src="/shots/dial-chat.png" alt="A chat thread with a proposed terms card and a counter-proposal" loading="lazy" />
+                <figcaption>Terms, negotiated in the thread</figcaption>
+              </figure>
+              <figure>
+                <img src="/shots/dial-accept.png" alt="A protected payment page with an Accept and pay button" loading="lazy" />
+                <figcaption>Accept &amp; pay from the deal page</figcaption>
+              </figure>
+              <figure>
+                <img src="/shots/dial-pay.png" alt="The pay form with the Instant, Protected and Custom dial" loading="lazy" />
+                <figcaption>The dial on every payment</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="lp-section">
         <div className="lp-wrap lp-split">
           <div>
             <div className="lp-eyebrow">The enforceability layer</div>
@@ -245,6 +281,11 @@ export default function Landing() {
               <span className="lp-chip lp-chip-exp">Exploring</span>
               <h3>Confidential amounts (ZK proofs)</h3>
               <p>Token-2022 confidential transfers hide deal amounts behind zero-knowledge proofs. The test suite already verifies real ZK ElGamal proofs; the account layout reserves the space.</p>
+            </div>
+            <div className="lp-road-wide">
+              <span className="lp-chip lp-chip-exp">Exploring</span>
+              <h3>Both sides on-chain (DvP)</h3>
+              <p>The Solana Foundation's open-source <a href="https://github.com/solana-foundation/dvp" target="_blank" rel="noreferrer">DvP program</a> swaps two tokenized legs in one instruction when a settlement authority signs. The next step makes the Latch deal that authority: the buyer's funds stay under the deal's rules — sign-offs, timers, a hold when the parties disagree — and the seller's tokenized asset settles against them atomically, or not at all. After the audit.</p>
             </div>
           </div>
           <p className="lp-dim lp-road-note">

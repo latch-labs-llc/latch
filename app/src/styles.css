@@ -283,6 +283,21 @@ button.ghost:hover { background: none; }
 .lp-chip-next { background: rgba(59,108,255,.16); color: #8fb0ff; border: 1px solid rgba(126,164,255,.3); }
 .lp-chip-exp { background: rgba(255,255,255,.06); color: var(--lp-dim); border: 1px solid var(--lp-line); }
 .lp-road-note { margin-top: 18px; font-size: .9em; }
+.lp-road > .lp-road-wide { grid-column: 1 / -1; }
+.lp-road-wide p { max-width: 62em; }
+.lp-preview { display: grid; grid-template-columns: 1fr 1.6fr; gap: 40px; align-items: center; }
+.lp-preview-copy p { color: var(--lp-dim); line-height: 1.65; margin: 0 0 14px; }
+.lp-preview-copy ul { margin: 0 0 16px; padding-left: 18px; color: var(--lp-dim); line-height: 1.6; font-size: .95em; }
+.lp-preview-copy li { margin-bottom: 6px; }
+.lp-phones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.lp-phones figure { margin: 0; }
+.lp-phones img { display: block; width: 100%; border-radius: 22px; border: 1px solid var(--lp-line); background: #0d1730; box-shadow: 0 24px 60px -18px rgba(3,8,24,.9), 0 0 0 1px rgba(126,164,255,.06); }
+.lp-phones figcaption { margin-top: 10px; text-align: center; font-size: .82em; color: var(--lp-dim); }
+@media (max-width: 900px) {
+  .lp-preview { grid-template-columns: 1fr; gap: 26px; }
+  .lp-phones { gap: 10px; }
+  .lp-phones figcaption { font-size: .74em; }
+}
 .lp-herobadge { display: inline-block; font-size: .78em; font-weight: 600; color: #a9c2ff; background: rgba(59,108,255,.14); border: 1px solid rgba(126,164,255,.28); border-radius: 999px; padding: 6px 14px; margin-bottom: 18px; letter-spacing: .02em; }
 
 /* certificate: interactive verification walkthrough */
