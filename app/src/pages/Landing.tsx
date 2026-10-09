@@ -285,7 +285,7 @@ export default function Landing() {
             <div className="lp-road-wide">
               <span className="lp-chip lp-chip-exp">Exploring</span>
               <h3>Both sides on-chain (DvP)</h3>
-              <p>The Solana Foundation's open-source <a href="https://github.com/solana-foundation/dvp" target="_blank" rel="noreferrer">DvP program</a> swaps two tokenized legs in one instruction when a settlement authority signs. The next step makes the Latch deal that authority: the buyer's funds stay under the deal's rules — sign-offs, timers, a hold when the parties disagree — and the seller's tokenized asset settles against them atomically, or not at all. After the audit.</p>
+              <p>A Latch deal already holds one side's payment against the other side's performance. With the Solana Foundation's open-source <a href="https://github.com/solana-foundation/dvp" target="_blank" rel="noreferrer">DvP program</a>, the other side can be a token too: the Latch deal acts as DvP's settlement authority, so the buyer's funds and the seller's tokenized asset swap in one instruction, and only when the deal's rules say so — sign-offs, timers, a hold when the parties disagree. Same deal, same rules, both sides on-chain. After the audit.</p>
             </div>
           </div>
           <p className="lp-dim lp-road-note">
