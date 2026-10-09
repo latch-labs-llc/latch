@@ -42,6 +42,7 @@ export default function Landing() {
             <a href="#/send">Send money</a>
             <a href="#/store">Demo store</a>
             <a href="#/cheat">Try to cheat</a>
+            <a href="https://dial.latchlabs.org/" target="_blank" rel="noreferrer">App preview</a>
             <a href="https://latchlabs.org/api/" target="_blank" rel="noreferrer">Docs</a>
             <a href="https://github.com/latch-labs-llc/latch" target="_blank" rel="noreferrer">GitHub</a>
           </div>
@@ -176,7 +177,10 @@ export default function Landing() {
                 <li>Every deal carries its evidence packet, rebuilt from public chain data.</li>
                 <li>Nothing new on-chain — it drives the same seventeen instructions as this site.</li>
               </ul>
-              <p className="lp-dim">Running on devnet today. Opens after the hackathon.</p>
+              <p className="lp-dim">
+                Running on devnet today, as a preview.{" "}
+                <a href="https://dial.latchlabs.org/" target="_blank" rel="noreferrer">Open dial.latchlabs.org →</a>
+              </p>
             </div>
             <div className="lp-phones">
               <figure>
@@ -265,7 +269,7 @@ export default function Landing() {
             <div>
               <span className="lp-chip lp-chip-done">Shipped</span>
               <h3>Protection is the dial</h3>
-              <p>The dial is live on this site: instant with friends, held-until-you-confirm with strangers, the full deal form when it's serious — <a href="#/send">try a protected send →</a>. The standalone consumer app builds on it.</p>
+              <p>The dial is live on this site: instant with friends, held-until-you-confirm with strangers, the full deal form when it's serious — <a href="#/send">try a protected send →</a>. The standalone consumer app builds on it: <a href="https://dial.latchlabs.org/" target="_blank" rel="noreferrer">preview →</a></p>
             </div>
             <div>
               <span className="lp-chip lp-chip-next">Next</span>
@@ -320,6 +324,7 @@ export default function Landing() {
             <a href="#/send">Send money</a>
             <a href="#/store">Demo store</a>
             <a href="#/cheat">Try to cheat</a>
+            <a href="https://dial.latchlabs.org/" target="_blank" rel="noreferrer">App preview</a>
             <a href="#/about">What is Latch?</a>
           </div>
           <div>
